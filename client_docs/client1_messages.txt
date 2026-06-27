@@ -1,0 +1,13 @@
+Hello Herath,
+We are rebuilding our Grafana system to make it 100% stable. From now on, we will no longer use web scraping. Everything will run professionally via official APIs and our own database. You are in charge of the data collection.
+Here is your exact plan. Please build this step by step:
+Step 1: Your Main Goal You need to build intelligent n8n bots. These bots will fetch data from official APIs and save the numbers directly into our PostgreSQL database. Grafana will then only read from this database.
+Step 2: Fetch Data from the "SMARD.de" API Build bots to monitor the German power grid. We need these exact values:
+Grid Frequency (Netzfrequenz): Fetch the "target" frequency and the "actual" frequency. (Refresh rate: every 1 to 5 seconds).
+Time Deviation (Netzzeitabweichung): Fetch the "grid time" and the "deviation". (Refresh rate: every second).
+Step 3: Fetch Data from the "ENTSO-E" API Build bots for the EPEX Spot electricity prices. We need these exact values:
+Intraday Prices: The current, running price.
+15-Minute Data: The highest (High), lowest (Low), and last (Last) price for every 15-minute block.
+60-Minute Data: The highest (High), lowest (Low), and last (Last) price for every full hour.
+Step 4: Pump Data into the Database Please create clean tables for all these values in our PostgreSQL database. Your n8n bots must save the fetched numbers there fully automatically and without interruption.
+Please let me know as soon as the database tables are ready and the first bots are running. Thank you!
