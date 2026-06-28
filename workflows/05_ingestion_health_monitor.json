@@ -1,65 +1,58 @@
 {
-  "name": "ingestion_health_monitor",
-  "nodes": [
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "minutes",
-              "minutesInterval": 1
-            }
-          ]
-        }
-      },
-      "id": "health-schedule",
-      "name": "Every minute",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        -520,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "with checks as (\n  select\n    data_domain,\n    latest_data_at,\n    data_age,\n    records_recent,\n    case\n      when data_domain = 'grid_frequency' and (latest_data_at is null or data_age > interval '30 seconds') then 'critical'\n      when data_domain = 'grid_time_deviation' and (latest_data_at is null or data_age > interval '60 seconds') then 'warning'\n      when data_domain = 'market_price_points' and (latest_data_at is null or records_recent = 0) then 'warning'\n      else null\n    end as severity\n  from energy_data.v_ingestion_health\n), inserted as (\n  insert into energy_data.ingestion_alerts (workflow_name, severity, message, metadata)\n  select\n    'ingestion_health_monitor',\n    severity,\n    data_domain || ' appears stale or empty',\n    jsonb_build_object(\n      'data_domain', data_domain,\n      'latest_data_at', latest_data_at,\n      'data_age', data_age::text,\n      'records_recent', records_recent\n    )\n  from checks\n  where severity is not null\n  returning 1\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name,\n  source_id,\n  finished_at,\n  status,\n  records_read,\n  records_written\n)\nselect\n  'ingestion_health_monitor',\n  (select id from energy_data.data_sources where code = 'calculated'),\n  now(),\n  'success',\n  (select count(*)::integer from checks),\n  (select count(*)::integer from inserted);"
-      },
-      "id": "health-db",
-      "name": "Check Ingestion Health",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        -220,
-        0
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "REPLACE_WITH_POSTGRES_CREDENTIAL_ID",
-          "name": "PostgreSQL"
-        }
-      }
-    }
-  ],
-  "connections": {
-    "Every minute": {
-      "main": [
-        [
-          {
-            "node": "Check Ingestion Health",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
-  "settings": {
-    "executionOrder": "v1",
-    "saveDataErrorExecution": "all",
-    "saveDataSuccessExecution": "none"
-  },
-  "active": false
+    "name":  "ingestion_health_monitor",
+    "nodes":  [
+                  {
+                      "parameters":  {
+                                         "rule":  {
+                                                      "interval":  [
+                                                                       {
+                                                                           "field":  "minutes",
+                                                                           "minutesInterval":  1
+                                                                       }
+                                                                   ]
+                                                  }
+                                     },
+                      "id":  "health-schedule",
+                      "name":  "Every minute",
+                      "type":  "n8n-nodes-base.scheduleTrigger",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       -520,
+                                       0
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "operation":  "executeQuery",
+                                         "query":  "with checks as (\n  select\n    data_domain,\n    latest_data_at,\n    data_age,\n    records_recent,\n    case\n      when data_domain = \u0027grid_frequency\u0027 and (latest_data_at is null or data_age \u003e interval \u002730 seconds\u0027) then \u0027critical\u0027\n      when data_domain = \u0027grid_time_deviation\u0027 and (latest_data_at is null or data_age \u003e interval \u002760 seconds\u0027) then \u0027warning\u0027\n      when data_domain = \u0027market_price_points\u0027 and (latest_data_at is null or records_recent = 0) then \u0027warning\u0027\n      else null\n    end as severity\n  from energy_data.v_ingestion_health\n), inserted as (\n  insert into energy_data.ingestion_alerts (workflow_name, severity, message, metadata)\n  select\n    \u0027ingestion_health_monitor\u0027,\n    severity,\n    data_domain || \u0027 appears stale or empty\u0027,\n    jsonb_build_object(\n      \u0027data_domain\u0027, data_domain,\n      \u0027latest_data_at\u0027, latest_data_at,\n      \u0027data_age\u0027, data_age::text,\n      \u0027records_recent\u0027, records_recent\n    )\n  from checks\n  where severity is not null\n  returning 1\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name,\n  source_id,\n  finished_at,\n  status,\n  records_read,\n  records_written\n)\nselect\n  \u0027ingestion_health_monitor\u0027,\n  (select id from energy_data.data_sources where code = \u0027calculated\u0027),\n  now(),\n  \u0027success\u0027,\n  (select count(*)::integer from checks),\n  (select count(*)::integer from inserted);"
+                                     },
+                      "id":  "health-db",
+                      "name":  "Check Ingestion Health",
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.5,
+                      "position":  [
+                                       -220,
+                                       0
+                                   ]
+                  }
+              ],
+    "connections":  {
+                        "Every minute":  {
+                                             "main":  [
+                                                          [
+                                                              {
+                                                                  "node":  "Check Ingestion Health",
+                                                                  "type":  "main",
+                                                                  "index":  0
+                                                              }
+                                                          ]
+                                                      ]
+                                         }
+                    },
+    "settings":  {
+                     "executionOrder":  "v1",
+                     "saveDataErrorExecution":  "all",
+                     "saveDataSuccessExecution":  "none"
+                 },
+    "active":  false
 }
-

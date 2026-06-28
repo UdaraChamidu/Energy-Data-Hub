@@ -12,7 +12,7 @@ This folder contains starter n8n workflows for the Germany-first ingestion phase
 
 ## Before Activating
 
-Create or select your n8n PostgreSQL credential, then assign it to every PostgreSQL node after import.
+Create or select your n8n PostgreSQL credential, then assign it to every PostgreSQL node after import. The workflow JSON files intentionally do not include placeholder PostgreSQL credential IDs, so imports should be cleaner across n8n instances.
 
 For ENTSO-E, replace this placeholder in the HTTP Request node:
 
@@ -37,4 +37,3 @@ Apply these PostgreSQL files first:
 - The ENTSO-E workflow stores Germany/DE-LU price points from document type `A44`.
 - The OHLC builder derives 15-minute and 60-minute aggregates from stored price points.
 - These workflows are meant as production-oriented starters. After import, test each workflow manually before activation.
-
