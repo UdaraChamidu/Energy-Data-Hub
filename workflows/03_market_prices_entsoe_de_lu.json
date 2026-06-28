@@ -1,0 +1,144 @@
+{
+  "name": "market_prices_entsoe_de_lu",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "entsoe-schedule",
+      "name": "Every 15 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -900,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst start = new Date(now);\nstart.setUTCHours(0, 0, 0, 0);\nconst end = new Date(start);\nend.setUTCDate(end.getUTCDate() + 2);\nfunction fmt(d) {\n  const pad = (n) => String(n).padStart(2, '0');\n  return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}`;\n}\nreturn [{ json: { periodStart: fmt(start), periodEnd: fmt(end) } }];"
+      },
+      "id": "entsoe-period",
+      "name": "Build Period",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://web-api.tp.entsoe.eu/api?securityToken=REPLACE_WITH_ENTSOE_SECURITY_TOKEN&documentType=A44&in_Domain=10Y1001A1001A82H&out_Domain=10Y1001A1001A82H&periodStart={{$json.periodStart}}&periodEnd={{$json.periodEnd}}",
+        "responseFormat": "string",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "entsoe-fetch",
+      "name": "Fetch ENTSO-E Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = String($json.data ?? $json.body ?? $json);\nif (!xml.includes('<TimeSeries')) {\n  throw new Error(`Unexpected ENTSO-E response: ${xml.slice(0, 500)}`);\n}\nfunction tag(source, name) {\n  const match = source.match(new RegExp(`<[^>]*${name}[^>]*>([\\\\s\\\\S]*?)<\\\\/[^>]*${name}>`, 'i'));\n  return match ? match[1].trim() : null;\n}\nfunction blocks(source, name) {\n  const re = new RegExp(`<[^>]*${name}[^>]*>([\\\\s\\\\S]*?)<\\\\/[^>]*${name}>`, 'gi');\n  return [...source.matchAll(re)].map((m) => m[1]);\n}\nfunction parseDuration(resolution) {\n  if (resolution === 'PT15M') return 15 * 60 * 1000;\n  if (resolution === 'PT30M') return 30 * 60 * 1000;\n  if (resolution === 'PT60M' || resolution === 'PT1H') return 60 * 60 * 1000;\n  throw new Error(`Unsupported ENTSO-E resolution: ${resolution}`);\n}\nfunction productFor(resolution) {\n  if (resolution === 'PT15M') return 'quarter_hour_day_ahead';\n  if (resolution === 'PT60M' || resolution === 'PT1H') return 'hour_day_ahead';\n  return 'day_ahead';\n}\nconst seriesBlocks = blocks(xml, 'TimeSeries');\nconst rows = [];\nfor (const series of seriesBlocks) {\n  const periodBlocks = blocks(series, 'Period');\n  for (const period of periodBlocks) {\n    const startText = tag(tag(period, 'timeInterval') ?? '', 'start');\n    const resolution = tag(period, 'resolution');\n    if (!startText || !resolution) continue;\n    const intervalMs = parseDuration(resolution);\n    const periodStart = new Date(startText);\n    const pointBlocks = blocks(period, 'Point');\n    for (const point of pointBlocks) {\n      const position = Number(tag(point, 'position'));\n      const price = Number(tag(point, 'price.amount') ?? tag(point, 'price_Amount') ?? tag(point, 'price'));\n      if (!Number.isFinite(position) || !Number.isFinite(price)) continue;\n      const deliveryStart = new Date(periodStart.getTime() + (position - 1) * intervalMs);\n      const deliveryEnd = new Date(deliveryStart.getTime() + intervalMs);\n      rows.push({\n        json: {\n          workflow_name: 'market_prices_entsoe_de_lu',\n          request_url: 'https://web-api.tp.entsoe.eu/api',\n          source_code: 'entsoe',\n          raw_payload: { xml },\n          product: productFor(resolution),\n          delivery_start: deliveryStart.toISOString(),\n          delivery_end: deliveryEnd.toISOString(),\n          price_eur_mwh: price,\n          currency: 'EUR',\n          source_published_at: '1970-01-01T00:00:00.000Z',\n          source_position: position,\n          resolution\n        }\n      });\n    }\n  }\n}\nif (rows.length === 0) {\n  throw new Error('ENTSO-E response parsed successfully but no price points were found.');\n}\nreturn rows;"
+      },
+      "id": "entsoe-parse",
+      "name": "Parse ENTSO-E XML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into energy_data.market_price_points (\n  source_id,\n  market_id,\n  product,\n  delivery_start,\n  delivery_end,\n  price_eur_mwh,\n  currency,\n  source_published_at,\n  source_position,\n  resolution\n)\nselect\n  s.id,\n  m.id,\n  $1,\n  $2::timestamptz,\n  $3::timestamptz,\n  $4::numeric,\n  $5,\n  coalesce($6::timestamptz, timestamp with time zone '1970-01-01 00:00:00+00'),\n  $7::integer,\n  $8\nfrom energy_data.data_sources s\ncross join energy_data.markets m\nwhere s.code = 'entsoe'\n  and m.country_code = 'DE'\n  and m.bidding_zone = 'DE-LU'\non conflict (source_id, market_id, product, delivery_start, delivery_end, source_published_at) do update\nset\n  price_eur_mwh = excluded.price_eur_mwh,\n  currency = excluded.currency,\n  source_position = excluded.source_position,\n  resolution = excluded.resolution,\n  ingested_at = now();",
+        "options": {
+          "queryReplacement": "={{ [\n$json.product,\n$json.delivery_start,\n$json.delivery_end,\n$json.price_eur_mwh,\n$json.currency,\n$json.source_published_at,\n$json.source_position,\n$json.resolution\n] }}"
+        }
+      },
+      "id": "entsoe-db",
+      "name": "Store ENTSO-E Price Point",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        60,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_WITH_POSTGRES_CREDENTIAL_ID",
+          "name": "PostgreSQL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 15 minutes": {
+      "main": [
+        [
+          {
+            "node": "Build Period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Period": {
+      "main": [
+        [
+          {
+            "node": "Fetch ENTSO-E Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch ENTSO-E Prices": {
+      "main": [
+        [
+          {
+            "node": "Parse ENTSO-E XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse ENTSO-E XML": {
+      "main": [
+        [
+          {
+            "node": "Store ENTSO-E Price Point",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "active": false
+}
+

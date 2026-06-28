@@ -1,0 +1,65 @@
+{
+  "name": "grid_time_deviation_calculated",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 3
+            }
+          ]
+        }
+      },
+      "id": "grid-time-schedule",
+      "name": "Every 3 seconds",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with latest as (\n  select\n    gf.market_id,\n    gf.measured_at,\n    gf.target_hz,\n    gf.actual_hz,\n    lag(gf.measured_at) over (partition by gf.market_id order by gf.measured_at) as previous_measured_at\n  from energy_data.grid_frequency_measurements gf\n  where gf.measured_at >= now() - interval '10 minutes'\n), sample as (\n  select *\n  from latest\n  where previous_measured_at is not null\n  order by measured_at desc\n  limit 1\n), previous_state as (\n  select coalesce((state ->> 'deviation_seconds')::numeric, 0) as previous_deviation_seconds\n  from energy_data.workflow_state\n  where workflow_name = 'grid_time_deviation_calculated'\n), calculated_row as (\n  select\n    s.id as source_id,\n    sample.market_id,\n    sample.measured_at,\n    sample.measured_at + make_interval(secs => coalesce(previous_state.previous_deviation_seconds, 0)::double precision) as grid_time,\n    (\n      coalesce(previous_state.previous_deviation_seconds, 0)\n      + ((sample.actual_hz - sample.target_hz) / sample.target_hz)\n        * extract(epoch from (sample.measured_at - sample.previous_measured_at))\n    )::numeric(12,3) as deviation_seconds\n  from sample\n  cross join energy_data.data_sources s\n  left join previous_state on true\n  where s.code = 'calculated'\n), upserted as (\n  insert into energy_data.grid_time_deviation_measurements (\n    source_id,\n    market_id,\n    measured_at,\n    grid_time,\n    deviation_seconds,\n    source_published_at,\n    quality,\n    calculation_method\n  )\n  select\n    source_id,\n    market_id,\n    measured_at,\n    grid_time,\n    deviation_seconds,\n    measured_at,\n    'calculated',\n    'frequency_integral_approximation'\n  from calculated_row\n  on conflict (source_id, market_id, measured_at) do update\n  set\n    grid_time = excluded.grid_time,\n    deviation_seconds = excluded.deviation_seconds,\n    source_published_at = excluded.source_published_at,\n    quality = excluded.quality,\n    calculation_method = excluded.calculation_method,\n    ingested_at = now()\n  returning source_id, measured_at, deviation_seconds\n), state_upsert as (\n  insert into energy_data.workflow_state (\n    workflow_name,\n    source_id,\n    last_success_at,\n    last_source_timestamp,\n    state\n  )\n  select\n    'grid_time_deviation_calculated',\n    source_id,\n    now(),\n    measured_at,\n    jsonb_build_object('deviation_seconds', deviation_seconds)\n  from upserted\n  on conflict (workflow_name) do update\n  set\n    source_id = excluded.source_id,\n    last_success_at = excluded.last_success_at,\n    last_source_timestamp = excluded.last_source_timestamp,\n    state = excluded.state,\n    updated_at = now()\n  returning 1\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name,\n  source_id,\n  finished_at,\n  status,\n  records_read,\n  records_written\n)\nselect\n  'grid_time_deviation_calculated',\n  coalesce((select source_id from upserted limit 1), (select id from energy_data.data_sources where code = 'calculated')),\n  now(),\n  case when exists (select 1 from upserted) then 'success' else 'partial' end,\n  (select count(*)::integer from sample),\n  (select count(*)::integer from upserted);"
+      },
+      "id": "grid-time-db",
+      "name": "Calculate And Store Deviation",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -240,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_WITH_POSTGRES_CREDENTIAL_ID",
+          "name": "PostgreSQL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 3 seconds": {
+      "main": [
+        [
+          {
+            "node": "Calculate And Store Deviation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "active": false
+}
+

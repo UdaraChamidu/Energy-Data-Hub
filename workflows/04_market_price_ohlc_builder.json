@@ -1,0 +1,65 @@
+{
+  "name": "market_price_ohlc_builder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "ohlc-schedule",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with interval_types as (\n  select '15m'::text as interval_type\n  union all\n  select '60m'::text as interval_type\n), grouped as (\n  select\n    p.source_id,\n    p.market_id,\n    it.interval_type,\n    case\n      when it.interval_type = '15m' then to_timestamp(floor(extract(epoch from p.delivery_start) / 900) * 900)\n      when it.interval_type = '60m' then date_trunc('hour', p.delivery_start)\n    end as interval_start,\n    case\n      when it.interval_type = '15m' then to_timestamp(floor(extract(epoch from p.delivery_start) / 900) * 900) + interval '15 minutes'\n      when it.interval_type = '60m' then date_trunc('hour', p.delivery_start) + interval '1 hour'\n    end as interval_end,\n    max(p.price_eur_mwh) as high_price_eur_mwh,\n    min(p.price_eur_mwh) as low_price_eur_mwh,\n    (array_agg(p.price_eur_mwh order by coalesce(p.source_published_at, p.ingested_at) desc, p.ingested_at desc))[1] as last_price_eur_mwh,\n    count(*)::integer as observation_count\n  from energy_data.market_price_points p\n  cross join interval_types it\n  where p.delivery_start >= now() - interval '3 days'\n    and p.delivery_start < now() + interval '3 days'\n  group by p.source_id, p.market_id, it.interval_type, interval_start, interval_end\n), upserted as (\n  insert into energy_data.market_price_ohlc (\n    source_id,\n    market_id,\n    interval_type,\n    interval_start,\n    interval_end,\n    high_price_eur_mwh,\n    low_price_eur_mwh,\n    last_price_eur_mwh,\n    observation_count,\n    calculated_from\n  )\n  select\n    source_id,\n    market_id,\n    interval_type,\n    interval_start,\n    interval_end,\n    high_price_eur_mwh,\n    low_price_eur_mwh,\n    last_price_eur_mwh,\n    observation_count,\n    'market_price_points'\n  from grouped\n  on conflict (source_id, market_id, interval_type, interval_start, interval_end) do update\n  set\n    high_price_eur_mwh = excluded.high_price_eur_mwh,\n    low_price_eur_mwh = excluded.low_price_eur_mwh,\n    last_price_eur_mwh = excluded.last_price_eur_mwh,\n    observation_count = excluded.observation_count,\n    calculated_from = excluded.calculated_from,\n    calculated_at = now()\n  returning 1\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name,\n  source_id,\n  finished_at,\n  status,\n  records_read,\n  records_written\n)\nselect\n  'market_price_ohlc_builder',\n  (select id from energy_data.data_sources where code = 'calculated'),\n  now(),\n  'success',\n  (select count(*)::integer from grouped),\n  (select count(*)::integer from upserted);"
+      },
+      "id": "ohlc-db",
+      "name": "Build OHLC Records",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -220,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_WITH_POSTGRES_CREDENTIAL_ID",
+          "name": "PostgreSQL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Build OHLC Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "active": false
+}
+

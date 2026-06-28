@@ -1,0 +1,120 @@
+{
+  "name": "grid_frequency_netzfrequenzmessung_de",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 3
+            }
+          ]
+        }
+      },
+      "id": "grid-frequency-schedule",
+      "name": "Every 3 seconds",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -760,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://dat.netzfrequenzmessung.de:9080/frequenz.xml",
+        "responseFormat": "string",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "grid-frequency-fetch",
+      "name": "Fetch Frequency XML",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = String($json.data ?? $json.body ?? $json);\nconst frequencyMatch = xml.match(/<f>([^<]+)<\\/f>/i);\nconst timestampMatch = xml.match(/<z>([^<]+)<\\/z>/i);\nif (!frequencyMatch || !timestampMatch) {\n  throw new Error(`Unexpected frequency XML response: ${xml.slice(0, 300)}`);\n}\nconst actualHz = Number(frequencyMatch[1]);\nconst measuredAt = new Date(timestampMatch[1]).toISOString();\nif (!Number.isFinite(actualHz)) {\n  throw new Error(`Invalid frequency value: ${frequencyMatch[1]}`);\n}\nreturn [{\n  json: {\n    workflow_name: 'grid_frequency_netzfrequenzmessung_de',\n    source_code: 'netzfrequenzmessung',\n    request_url: 'https://dat.netzfrequenzmessung.de:9080/frequenz.xml',\n    response_status: 200,\n    raw_payload: { xml },\n    measured_at: measuredAt,\n    actual_hz: actualHz,\n    target_hz: 50.000\n  }\n}];"
+      },
+      "id": "grid-frequency-parse",
+      "name": "Parse Frequency XML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with raw_payload as (\n  insert into energy_data.raw_api_payloads (\n    source_id,\n    workflow_name,\n    request_url,\n    request_hash,\n    response_status,\n    payload\n  )\n  select\n    s.id,\n    $1,\n    $2,\n    md5($3::text),\n    $4::integer,\n    $3::jsonb\n  from energy_data.data_sources s\n  where s.code = $5\n  returning id\n), upserted as (\n  insert into energy_data.grid_frequency_measurements (\n    source_id,\n    market_id,\n    measured_at,\n    target_hz,\n    actual_hz,\n    source_published_at,\n    quality,\n    raw_payload_id\n  )\n  select\n    s.id,\n    m.id,\n    $6::timestamptz,\n    $7::numeric,\n    $8::numeric,\n    $6::timestamptz,\n    'ok',\n    raw_payload.id\n  from energy_data.data_sources s\n  cross join energy_data.markets m\n  cross join raw_payload\n  where s.code = 'netzfrequenzmessung'\n    and m.country_code = 'DE'\n    and m.bidding_zone = 'DE-LU'\n  on conflict (source_id, market_id, measured_at) do update\n  set\n    target_hz = excluded.target_hz,\n    actual_hz = excluded.actual_hz,\n    source_published_at = excluded.source_published_at,\n    quality = excluded.quality,\n    raw_payload_id = excluded.raw_payload_id,\n    ingested_at = now()\n  returning id\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name,\n  source_id,\n  finished_at,\n  status,\n  records_read,\n  records_written\n)\nselect\n  $1,\n  s.id,\n  now(),\n  'success',\n  1,\n  count(*)::integer\nfrom energy_data.data_sources s\ncross join upserted\nwhere s.code = 'netzfrequenzmessung'\ngroup by s.id;",
+        "options": {
+          "queryReplacement": "={{ [\n$json.workflow_name,\n$json.request_url,\nJSON.stringify($json.raw_payload),\n$json.response_status,\n$json.source_code,\n$json.measured_at,\n$json.target_hz,\n$json.actual_hz\n] }}"
+        }
+      },
+      "id": "grid-frequency-db",
+      "name": "Store Frequency In PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -20,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_WITH_POSTGRES_CREDENTIAL_ID",
+          "name": "PostgreSQL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 3 seconds": {
+      "main": [
+        [
+          {
+            "node": "Fetch Frequency XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Frequency XML": {
+      "main": [
+        [
+          {
+            "node": "Parse Frequency XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Frequency XML": {
+      "main": [
+        [
+          {
+            "node": "Store Frequency In PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "active": false
+}
+
