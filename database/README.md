@@ -9,8 +9,11 @@ Run these files in order:
 1. `001_create_energy_data_schema.sql`
 2. `002_seed_germany_sources.sql`
 3. `003_create_views.sql`
+4. `005_align_client_api_sources.sql`
 
 `004_upsert_examples.sql` is not a migration. It contains reference SQL snippets for n8n PostgreSQL nodes.
+
+`005_align_client_api_sources.sql` is idempotent and is especially important when `001-003` were applied before the SMARD collector was added.
 
 ## What This Creates
 
@@ -50,6 +53,9 @@ Seeded market:
 - `ENTSOE_SECURITY_TOKEN` is seeded only as a placeholder.
 - Grid frequency target is stored as `50.000 Hz` because the selected live endpoint returns actual frequency only.
 - Grid time deviation is designed to be calculated first, then replaced by an official API source later if one becomes available.
+- ENTSO-E is the primary DE-LU day-ahead source; SMARD is an independent official-platform fallback/cross-check.
+- `v_grafana_current_market_price` returns the interval active now, preferring ENTSO-E and falling back to SMARD.
+- `v_grafana_market_price_stats_today` uses the current Europe/Berlin calendar day for the requested daily high/low values.
 - Grafana is not required for this phase, but views are included so the database is ready for dashboard work later.
 
 ## Basic Verification Queries
@@ -60,4 +66,3 @@ select * from energy_data.markets order by country_code, bidding_zone;
 select * from energy_data.collector_settings order by key;
 select * from energy_data.v_ingestion_health;
 ```
-

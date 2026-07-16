@@ -10,6 +10,7 @@ For the Germany-first version, use this API strategy:
 | Target grid frequency | Store as configured value `50.000 Hz` | Target is normally 50 Hz for the Continental Europe synchronous area. No separate target value is returned by the selected frequency endpoint. |
 | Grid time deviation | Calculate internally from frequency unless a better official endpoint is provided later | I did not find a clean public official API for live grid time deviation. Swissgrid explains the concept but does not expose a simple documented API on the inspected pages. |
 | Germany day-ahead / market prices | ENTSO-E Transparency Platform Web API | Official European transparency source, suited for day-ahead price time series, requires security token. |
+| Germany wholesale-price fallback/cross-check | SMARD public JSON series | Client-named Bundesnetzagentur platform; no token; filter `4169`, region `DE-LU`. |
 | Germany 15-minute prices | ENTSO-E first, if the returned German day-ahead series uses 15-minute resolution; otherwise use EPEX/EEX licensed market data | EPEX public pages show 15-minute market result structure, but reliable programmatic access for full market data points to market-data products/licensing. |
 | Germany 60-minute prices | ENTSO-E day-ahead hourly/aggregated data or derived from 15-minute data | Fits current database design. |
 | True continuous intraday High/Low/Last | EPEX SPOT / EEX market data service, if credentials/license are available | ENTSO-E is not a real-time continuous intraday trade feed. EPEX/EEX is the proper market source for this. |
@@ -17,7 +18,7 @@ For the Germany-first version, use this API strategy:
 
 ## Recommended First Build
 
-Build the first PostgreSQL ingestion with two provider groups:
+Build the first PostgreSQL ingestion with three provider groups:
 
 1. Grid frequency collector:
    - Provider: `netzfrequenzmessung.de`.
@@ -43,9 +44,16 @@ Build the first PostgreSQL ingestion with two provider groups:
      - `product`
      - `source_published_at`
 
+3. SMARD market-price fallback/cross-check:
+   - Provider: SMARD.de.
+   - Index endpoint: `https://www.smard.de/app/chart_data/4169/DE-LU/index_quarterhour.json`.
+   - Data endpoint: latest timestamp from the index inserted into `4169_DE-LU_quarterhour_{timestamp}.json`.
+   - Authentication: none.
+   - Purpose: independent storage of the client-named SMARD wholesale-price series, not live grid frequency.
+
 ## Why Not SMARD For The First Live Collectors?
 
-SMARD is useful and official for German electricity market data downloads and future dashboard expansions. Its download page states that SMARD data can be downloaded, stored, and reused under CC BY 4.0.
+SMARD is useful and official for German electricity market data downloads and dashboard expansions. Its download page states that SMARD data can be downloaded, stored, and reused under CC BY 4.0. The project now ingests its Germany/DE-LU wholesale-price JSON series as a fallback/cross-check.
 
 However, for the immediate first build, the client needs:
 
@@ -98,4 +106,3 @@ This avoids blocking the project while still building the correct PostgreSQL/n8n
 - EPEX SPOT Market Results: https://www.epexspot.com/en/market-results
 - SMARD market data download page: https://www.smard.de/home/downloadcenter/download-marktdaten
 - aWATTar API documentation: https://www.awattar.at/services/api/
-

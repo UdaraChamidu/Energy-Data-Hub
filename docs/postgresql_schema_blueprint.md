@@ -1,6 +1,6 @@
 # PostgreSQL Schema Blueprint
 
-This is the proposed schema in SQL form for review. It should be converted into migration scripts in `database/` only after approval.
+This is a readable schema blueprint. The executable, idempotent scripts are maintained in `database/`; use those scripts for installation rather than copying SQL from this document.
 
 ```sql
 create schema if not exists energy_data;
@@ -192,21 +192,17 @@ where p.interval_start >= now() - interval '24 hours'
 group by m.country_code, m.bidding_zone, p.interval_type;
 ```
 
-## Seed Data To Confirm
+## Implemented Seed Data
 
-Likely source rows:
+Source rows:
 
 - `smard`
 - `netzfrequenzmessung`
 - `entsoe`
 - `awattar`
 
-Likely market rows:
+Initial market row:
 
-- Germany: `DE-LU` or exact approved German bidding zone.
-- Austria: `AT`.
-- France: `FR`.
-- Switzerland: `CH`.
+- Germany/Luxembourg: `DE-LU`, EIC `10Y1001A1001A82H`.
 
-The exact codes should be confirmed against the selected API provider before migrations are created.
-
+Austria, France, and Switzerland are intentionally deferred.

@@ -140,7 +140,48 @@ ENTSOE_PRICE_DOCUMENT_TYPE=A44
 ENTSOE_PRICE_POLL_MINUTES=15
 ```
 
-## 4. EPEX/EEX Market Data Service
+## 4. SMARD Germany/Luxembourg Wholesale Prices
+
+Provider:
+
+- SMARD.de, operated by the Bundesnetzagentur.
+
+Index endpoint:
+
+```text
+GET https://www.smard.de/app/chart_data/4169/DE-LU/index_quarterhour.json
+```
+
+Latest data endpoint:
+
+```text
+GET https://www.smard.de/app/chart_data/4169/DE-LU/4169_DE-LU_quarterhour_{latest_timestamp}.json
+```
+
+Response mapping:
+
+| JSON field | Meaning | PostgreSQL target |
+| --- | --- | --- |
+| `series[][0]` | Delivery start in Unix milliseconds | `market_price_points.delivery_start` |
+| `series[][1]` | Wholesale price in EUR/MWh; null when unpublished | `market_price_points.price_eur_mwh` |
+| `meta_data.created` | Payload creation time in Unix milliseconds | Raw-payload audit metadata |
+
+Configuration:
+
+```text
+SMARD_PRICE_FILTER=4169
+SMARD_PRICE_REGION=DE-LU
+SMARD_PRICE_RESOLUTION=quarterhour
+SMARD_PRICE_POLL_MINUTES=15
+```
+
+Important:
+
+- This endpoint contains wholesale/day-ahead interval prices, not live grid frequency and not continuous intraday trades.
+- The endpoint is public and hosted on the official SMARD domain, but its JSON URL contract is not documented in the SMARD user manual. The workflow therefore archives raw payloads and is monitored for schema changes.
+- Null future values are ignored and can be ingested on a later run after SMARD publishes them.
+
+## 5. EPEX/EEX Market Data Service
 
 Provider:
 
@@ -165,7 +206,7 @@ Licensed products: Germany intraday, day-ahead, 15-minute, 60-minute
 Usage rights for storage in PostgreSQL and dashboard display
 ```
 
-## 5. aWATTar Fallback Price Feed
+## 6. aWATTar Fallback Price Feed
 
 Documented Austrian endpoint:
 
@@ -210,4 +251,3 @@ Limitations:
 - Not true continuous intraday OHLC.
 - Documented fair use is 100 calls/day.
 - Use only as fallback or temporary test source.
-

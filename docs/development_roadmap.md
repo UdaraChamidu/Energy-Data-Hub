@@ -1,6 +1,17 @@
 # Development Roadmap
 
-This roadmap starts after the client approves the analysis and open decisions.
+This roadmap reflects the Germany-first implementation status. Database scripts and importable n8n workflows are prepared; live deployment and evidence still require access to the client's n8n and PostgreSQL instances.
+
+## Current Status
+
+| Phase | Status |
+| --- | --- |
+| Requirements and source selection | Complete for Germany-first build |
+| PostgreSQL schema, seed data, and views | Prepared; not live-verified on client DB |
+| Frequency and calculated deviation workflows | Prepared; not live-verified in client n8n |
+| ENTSO-E and SMARD price workflows | Prepared; ENTSO-E token required |
+| Price aggregate and health workflows | Prepared; not live-verified in client n8n |
+| Grafana, deployment, retention, and handover | Pending |
 
 ## Phase 0: Client Approval And Access Collection
 
@@ -183,4 +194,3 @@ Candidate additions:
 - Historical analytics and forecasting.
 
 These should be treated as separate scoped enhancements after the first dashboard is stable.
-

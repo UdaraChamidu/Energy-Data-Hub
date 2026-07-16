@@ -29,20 +29,16 @@ The broader future scope mentioned by the client, but not yet approved as first 
 
 ## Countries And Markets
 
-The client mentions Germany, Switzerland, France, and Austria for real-time grid stability and electricity prices. The initial dashboard investigation focuses mainly on Germany. This creates an open scope decision:
-
-- Minimum first release: Germany only, matching the investigated dashboard.
-- Expanded first release: Germany, Switzerland, France, and Austria.
-
-This should be clarified before implementation because it affects API parameters, table cardinality, Grafana filters, and historical retention volume.
+The first release is confirmed as Germany. Market-price collection uses the Germany/Luxembourg bidding zone (`DE-LU`, EIC `10Y1001A1001A82H`). Switzerland, France, and Austria remain future expansion scope. The schema keeps country and bidding-zone dimensions so those markets can be added without redesigning the storage model.
 
 ## System Architecture Summary
 
 The recommended architecture is a small ingestion platform around PostgreSQL:
 
 1. API source layer
-   - Official grid metric API source: SMARD.de or netzfrequenzmessung.de.
-   - Official market price API source: ENTSO-E Transparency Platform or aWATTar.
+   - Live grid metric source: client-approved `netzfrequenzmessung.de` endpoint.
+   - Primary official market price source: ENTSO-E Transparency Platform.
+   - Client-named official-platform fallback/cross-check: SMARD Germany/DE-LU wholesale-price JSON.
 
 2. n8n workflow layer
    - One workflow per data domain and refresh rhythm.
@@ -74,15 +70,10 @@ Purpose:
 - Fetch target grid frequency.
 - Fetch actual grid frequency.
 
-Candidate sources from client docs:
+Selected source:
 
-- SMARD.de API.
-- netzfrequenzmessung.de.
-
-Open issue:
-
-- The client documents do not provide exact endpoint URLs, request parameters, authentication details, response examples, or rate limits.
-- It must be confirmed whether SMARD provides the live 1-second frequency and grid time deviation values required by the dashboard, or whether netzfrequenzmessung.de is the correct source for this live data.
+- `netzfrequenzmessung.de`, which is explicitly allowed by the detailed client requirements.
+- SMARD has no suitable documented sub-5-second frequency series, so it is not used for this metric.
 
 Required response fields:
 
@@ -99,14 +90,10 @@ Purpose:
 - Fetch grid time.
 - Fetch grid time deviation in seconds.
 
-Candidate sources from client docs:
+Selected first-build method:
 
-- SMARD.de API.
-- netzfrequenzmessung.de.
-
-Open issue:
-
-- Same as frequency: exact endpoint, response format, and rate limits are missing.
+- Integrate deviation from stored frequency samples and mark every row as calculated.
+- Replace this workflow if the client later supplies an official grid-time endpoint.
 
 Required response fields:
 
@@ -122,16 +109,17 @@ Purpose:
 - Fetch the current running intraday electricity price.
 - Support price monitoring for EPEX Spot markets.
 
-Candidate sources from client docs:
+Selected sources:
 
-- ENTSO-E Transparency Platform API.
-- aWATTar API.
+- ENTSO-E `A44` as primary official day-ahead source.
+- SMARD filter `4169` as client-named fallback/cross-check.
+- aWATTar remains disabled and is not required for the first build.
 
 Open issues:
 
 - ENTSO-E primarily provides official market transparency data but may not expose every real-time EPEX intraday trade value needed for a "running price" panel.
 - aWATTar may provide easier JSON endpoints for market prices, but the client must approve it as an official-enough source if ENTSO-E does not cover the exact intraday requirement.
-- Exact market areas must be confirmed: DE-LU, AT, FR, CH, or other bidding zones.
+- True continuous EPEX intraday trade prices are not available from the selected free APIs; DE-LU is confirmed for this release.
 
 Required response fields:
 
@@ -239,27 +227,19 @@ Operations:
 - Maintenance window.
 - Who approves schema changes and dashboard changes.
 
-## Missing Information And Clarifications
+## Remaining Operational Inputs
 
-The following must be clarified before implementation code is generated:
+Implementation files are ready, but live activation still needs:
 
-1. Which API provider is final for grid frequency and grid time deviation?
-2. Which exact endpoints and parameters were used in the client's successful live test?
-3. Does the grid source permit 1-second polling under its terms and rate limits?
-4. Which API provider is final for EPEX/market prices?
-5. Are intraday values actual live trades, official index prices, or latest published market data?
-6. Are 15-minute high/low/last values provided by the API or must they be calculated?
-7. Are 60-minute high/low/last values hourly intraday products or day-ahead hourly prices?
-8. Which first-release countries/bidding zones are required?
-9. Is historical backfill required before live collection starts?
-10. What are the Grafana dashboard refresh intervals expected by the users?
-11. What retention period should be used for 1-second grid data?
-12. Should failed API responses be archived for audit/debugging?
-13. Should n8n send alerts on every failure, repeated failures only, or after a downtime threshold?
+1. PostgreSQL host, port, database, username, password, and SSL mode.
+2. n8n access and assignment of the PostgreSQL credential to imported nodes.
+3. ENTSO-E security token configured as `ENTSOE_SECURITY_TOKEN` in n8n.
+4. Client confirmation that day-ahead interval prices are acceptable until licensed continuous intraday trade data is available.
+5. Retention period for high-frequency frequency/deviation rows.
+6. Alert recipients and notification channel.
+7. Historical backfill period, if any.
 
-## Key Assumptions For Planning Only
-
-These are planning assumptions, not implementation decisions:
+## Current Implementation Decisions
 
 - PostgreSQL will be the source of truth for Grafana.
 - All measurement timestamps will be stored in UTC.
@@ -267,4 +247,3 @@ These are planning assumptions, not implementation decisions:
 - Source payloads should be stored for troubleshooting where reasonable.
 - Initial schema should support multiple countries/bidding zones even if Germany is built first.
 - The first implementation should avoid TimescaleDB unless the client confirms it is allowed, because plain PostgreSQL is enough to begin and simpler to operate.
-

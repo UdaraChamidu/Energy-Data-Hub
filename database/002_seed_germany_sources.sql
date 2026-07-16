@@ -34,8 +34,8 @@ values
     'SMARD.de',
     'https://www.smard.de',
     false,
-    false,
-    'Future candidate for German generation, load, forecast, and market data expansion.'
+    true,
+    'Client-named Bundesnetzagentur source. Used for the DE-LU quarter-hour wholesale-price fallback/cross-check; not a live frequency source.'
   ),
   (
     'calculated',
@@ -125,6 +125,36 @@ values
     false
   ),
   (
+    'SMARD_INDEX_URL',
+    'https://www.smard.de/app/chart_data/4169/DE-LU/index_quarterhour.json',
+    'SMARD index for Germany/Luxembourg quarter-hour wholesale-price chunks.',
+    false
+  ),
+  (
+    'SMARD_PRICE_FILTER',
+    '4169',
+    'SMARD wholesale-price filter for Germany/Luxembourg.',
+    false
+  ),
+  (
+    'SMARD_PRICE_REGION',
+    'DE-LU',
+    'SMARD market region for the Germany-first build.',
+    false
+  ),
+  (
+    'SMARD_PRICE_RESOLUTION',
+    'quarterhour',
+    'SMARD price-series resolution.',
+    false
+  ),
+  (
+    'SMARD_PRICE_POLL_MINUTES',
+    '15',
+    'SMARD fallback/cross-check polling interval.',
+    false
+  ),
+  (
     'ENTSOE_SECURITY_TOKEN',
     'SET_IN_N8N_CREDENTIALS_OR_ENV',
     'Secret value placeholder. Do not store real API tokens in this table.',
@@ -138,4 +168,3 @@ set
   updated_at = now();
 
 commit;
-

@@ -1,6 +1,6 @@
 # n8n Workflow Design
 
-This document describes the required n8n workflows. It is a design document only; workflow JSON should be generated after client approval.
+This document describes the implemented Germany-first n8n workflows. Importable JSON files are in `workflows/` and remain inactive until manually tested with the client's PostgreSQL credential.
 
 ## General Workflow Standards
 
@@ -18,9 +18,9 @@ Every workflow should:
 
 ## Workflow 1: Grid Frequency Collector
 
-Proposed name:
+Implemented name:
 
-- `grid_frequency_live_collector`
+- `grid_frequency_netzfrequenzmessung_de`
 
 Purpose:
 
@@ -56,9 +56,9 @@ Open design decision:
 
 ## Workflow 2: Grid Time Deviation Collector
 
-Proposed name:
+Implemented name:
 
-- `grid_time_deviation_live_collector`
+- `grid_time_deviation_calculated`
 
 Purpose:
 
@@ -92,26 +92,26 @@ Open design decision:
 
 - The client must confirm provider rate limits and permission for 1-second polling.
 
-## Workflow 3: Market Intraday Current Price Collector
+## Workflow 3: ENTSO-E DE-LU Price Collector
 
-Proposed name:
+Implemented name:
 
-- `market_intraday_price_collector`
+- `market_prices_entsoe_de_lu`
 
 Purpose:
 
-- Fetch current/running intraday price.
+- Fetch official ENTSO-E `A44` day-ahead price intervals.
 - Save into `energy_data.market_price_points`.
 
 Trigger:
 
-- To be confirmed. Suggested starting point: every 1 minute unless provider rate limits or business needs require otherwise.
+- Every 15 minutes.
 
 Nodes:
 
 1. Schedule Trigger.
 2. Create ingestion run.
-3. HTTP Request to ENTSO-E/aWATTar/approved source.
+3. HTTP Request to ENTSO-E with `ENTSOE_SECURITY_TOKEN`.
 4. Validate source response.
 5. Transform into market price point rows:
    - market/bidding zone
@@ -127,87 +127,50 @@ Nodes:
 8. Complete ingestion run.
 9. Error branch creates alert and marks run failed.
 
-Open design decision:
+The database view `v_grafana_current_market_price` chooses the price interval active now. It must not be described as a continuous intraday trade price.
 
-- The exact meaning of "current running price" must be confirmed before this workflow is implemented.
+## Workflow 4: SMARD DE-LU Price Collector
 
-## Workflow 4: 15-Minute OHLC Price Builder
+Implemented name:
 
-Proposed name:
-
-- `market_price_15m_ohlc_builder`
+- `market_prices_smard_de_lu`
 
 Purpose:
 
-- Produce high, low, and last price for each 15-minute interval.
+- Use the client-named SMARD source as an independent official-platform fallback/cross-check.
+- Read filter `4169`, region `DE-LU`, quarter-hour JSON data.
+- Skip unpublished null values, archive the raw payload, and upsert valid price intervals.
+
+## Workflow 5: 15/60-Minute Price Aggregate Builder
+
+Implemented name:
+
+- `market_price_ohlc_builder`
+
+Purpose:
+
+- Produce high, low, and last for 15-minute and 60-minute intervals.
 - Save into `energy_data.market_price_ohlc`.
 
 Trigger:
 
-- Every 1 to 5 minutes, or after new intraday data is collected.
-
-Input options:
-
-- Direct API values if provider supplies OHLC.
-- Calculated from `energy_data.market_price_points`.
+- Every 5 minutes.
 
 Nodes:
 
-1. Schedule Trigger or Execute Workflow trigger from intraday collector.
-2. Select recent unaggregated price points.
-3. Group by market and 15-minute delivery interval.
+1. Schedule Trigger.
+2. Select recent ENTSO-E and SMARD day-ahead price points.
+3. Group separately by source, market, and 15/60-minute interval.
 4. Calculate:
    - high = maximum price.
    - low = minimum price.
-   - last = latest by source publication time or ingestion time.
+   - last = price for the chronologically final delivery subinterval.
 5. PostgreSQL upsert into `market_price_ohlc`.
 6. Complete ingestion run.
-7. Error branch creates alert.
 
-Open design decision:
+For day-ahead data, 15-minute high/low/last are normally equal because there is one clearing price for that interval. A 60-minute row compares the four quarter-hour prices. These values are not continuous-trade OHLC.
 
-- Confirm whether `last` means latest trade, latest publication, or latest collector-observed price.
-
-## Workflow 5: 60-Minute OHLC Price Builder
-
-Proposed name:
-
-- `market_price_60m_ohlc_builder`
-
-Purpose:
-
-- Produce high, low, and last price for each 60-minute interval.
-- Save into `energy_data.market_price_ohlc`.
-
-Trigger:
-
-- Every 5 to 15 minutes, or after new source data arrives.
-
-Input options:
-
-- Official hourly/day-ahead values.
-- Calculated from 15-minute values.
-- Calculated from individual price points.
-
-Nodes:
-
-1. Schedule Trigger or Execute Workflow trigger from price collector.
-2. Select source data for recent hourly windows.
-3. Group by market and hourly interval.
-4. Calculate high, low, and last.
-5. PostgreSQL upsert into `market_price_ohlc`.
-6. Complete ingestion run.
-7. Error branch creates alert.
-
-Open design decision:
-
-- Confirm whether this panel should show hourly day-ahead prices or hourly intraday OHLC.
-
-## Workflow 6: Grafana Stat Value Refresher
-
-Proposed name:
-
-- `market_price_stat_refresh`
+## Workflow 6: Grafana Stat Views
 
 Purpose:
 
@@ -217,18 +180,14 @@ Purpose:
   - 60min Low
   - 60min High
 
-Trigger:
+Implementation:
 
-- Every 1 to 5 minutes, or skipped if Grafana queries calculate stats directly.
-
-Recommended approach:
-
-- Prefer Grafana queries/views over storing separate stat records, because the stats are derived values.
-- Add a materialized view only if Grafana performance requires it.
+- No separate n8n workflow is needed.
+- `v_grafana_market_price_stats_today` calculates the current Europe/Berlin calendar-day high/low values by source and interval.
 
 ## Workflow 7: Ingestion Health Monitor
 
-Proposed name:
+Implemented name:
 
 - `ingestion_health_monitor`
 
@@ -249,7 +208,7 @@ Checks:
 
 Actions:
 
-- Insert or update `energy_data.ingestion_alerts`.
+- Insert or refresh one open `energy_data.ingestion_alerts` row per data domain and resolve it after recovery.
 - Send notification to approved channel.
 
 ## Future Workflow Candidates
@@ -288,4 +247,3 @@ Timezone handling:
 
 - All writes should use UTC.
 - Grafana should display CET/CEST.
-

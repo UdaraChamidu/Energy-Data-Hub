@@ -16,6 +16,7 @@ Use now:
 
 - `netzfrequenzmessung.de` for actual grid frequency.
 - ENTSO-E Transparency Platform for Germany day-ahead / official price series.
+- SMARD public JSON price series as an independent Germany/DE-LU fallback and cross-check.
 
 Keep as fallback:
 
@@ -24,7 +25,7 @@ Keep as fallback:
 Keep as later upgrade:
 
 - EPEX SPOT / EEX Group market data service for true continuous intraday High/Low/Last.
-- SMARD for future official German generation/load/market-data expansions.
+- Additional SMARD generation/load/forecast series.
 
 ## Known Gaps
 
@@ -100,11 +101,16 @@ Recommended initial workflows:
    - Parse XML.
    - Insert/upsert `market_price_points`.
 
-4. `market_price_ohlc_builder`
+4. `market_prices_smard_de_lu`
+   - Read the latest SMARD `4169` DE-LU quarter-hour JSON chunk.
+   - Insert/upsert `market_price_points` under source `smard`.
+   - Provide a fallback/cross-check when ENTSO-E is unavailable.
+
+5. `market_price_ohlc_builder`
    - Build 15-minute and 60-minute records from stored points where possible.
    - Insert/upsert `market_price_ohlc`.
 
-5. `ingestion_health_monitor`
+6. `ingestion_health_monitor`
    - Detect stale frequency and price data.
    - Write `ingestion_alerts`.
 
@@ -125,6 +131,12 @@ ENTSOE_DE_LU_DOMAIN=10Y1001A1001A82H
 ENTSOE_PRICE_DOCUMENT_TYPE=A44
 ENTSOE_PRICE_POLL_MINUTES=15
 
+SMARD_INDEX_URL=https://www.smard.de/app/chart_data/4169/DE-LU/index_quarterhour.json
+SMARD_PRICE_FILTER=4169
+SMARD_PRICE_REGION=DE-LU
+SMARD_PRICE_RESOLUTION=quarterhour
+SMARD_PRICE_POLL_MINUTES=15
+
 POSTGRES_HOST=replace_me
 POSTGRES_PORT=5432
 POSTGRES_DB=replace_me
@@ -132,4 +144,3 @@ POSTGRES_USER=replace_me
 POSTGRES_PASSWORD=replace_me
 POSTGRES_SSL_MODE=require_or_disable
 ```
-

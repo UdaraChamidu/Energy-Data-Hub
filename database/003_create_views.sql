@@ -98,6 +98,50 @@ select
 from energy_data.market_price_points p
 join energy_data.markets m on m.id = p.market_id;
 
+create or replace view energy_data.v_grafana_current_market_price as
+with ranked_current_prices as (
+  select
+    p.delivery_start as "time",
+    s.code as source_code,
+    m.country_code,
+    m.bidding_zone,
+    m.eic_code,
+    p.product,
+    p.delivery_start,
+    p.delivery_end,
+    p.price_eur_mwh,
+    p.currency,
+    p.resolution,
+    p.ingested_at,
+    row_number() over (
+      partition by m.id
+      order by
+        case s.code when 'entsoe' then 1 when 'smard' then 2 else 99 end,
+        p.ingested_at desc
+    ) as source_rank
+  from energy_data.market_price_points p
+  join energy_data.data_sources s on s.id = p.source_id
+  join energy_data.markets m on m.id = p.market_id
+  where now() >= p.delivery_start
+    and now() < p.delivery_end
+    and p.product in ('day_ahead', 'quarter_hour_day_ahead', 'hour_day_ahead')
+)
+select
+  "time",
+  source_code,
+  country_code,
+  bidding_zone,
+  eic_code,
+  product,
+  delivery_start,
+  delivery_end,
+  price_eur_mwh,
+  currency,
+  resolution,
+  ingested_at
+from ranked_current_prices
+where source_rank = 1;
+
 create or replace view energy_data.v_grafana_market_price_ohlc as
 select
   p.interval_start as "time",
@@ -129,6 +173,22 @@ from energy_data.market_price_ohlc p
 join energy_data.markets m on m.id = p.market_id
 where p.interval_start >= now() - interval '24 hours'
 group by m.country_code, m.bidding_zone, m.eic_code, p.interval_type;
+
+create or replace view energy_data.v_grafana_market_price_stats_today as
+select
+  s.code as source_code,
+  m.country_code,
+  m.bidding_zone,
+  m.eic_code,
+  p.interval_type,
+  min(p.low_price_eur_mwh) as low_price_eur_mwh,
+  max(p.high_price_eur_mwh) as high_price_eur_mwh,
+  max(p.calculated_at) as calculated_at
+from energy_data.market_price_ohlc p
+join energy_data.data_sources s on s.id = p.source_id
+join energy_data.markets m on m.id = p.market_id
+where (p.interval_start at time zone m.timezone)::date = (now() at time zone m.timezone)::date
+group by s.code, m.country_code, m.bidding_zone, m.eic_code, p.interval_type;
 
 create or replace view energy_data.v_ingestion_health as
 select

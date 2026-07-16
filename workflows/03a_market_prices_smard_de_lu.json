@@ -1,0 +1,167 @@
+{
+    "name":  "market_prices_smard_de_lu",
+    "nodes":  [
+                  {
+                      "parameters":  {
+                                         "rule":  {
+                                                      "interval":  [
+                                                                       {
+                                                                           "field":  "minutes",
+                                                                           "minutesInterval":  15
+                                                                       }
+                                                                   ]
+                                                  }
+                                     },
+                      "id":  "smard-schedule",
+                      "name":  "Every 15 minutes",
+                      "type":  "n8n-nodes-base.scheduleTrigger",
+                      "typeVersion":  1.2,
+                      "position":  [
+                                       0,
+                                       0
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "url":  "https://www.smard.de/app/chart_data/4169/DE-LU/index_quarterhour.json",
+                                         "options":  {
+                                                         "timeout":  30000
+                                                     }
+                                     },
+                      "id":  "smard-index-fetch",
+                      "name":  "Fetch SMARD Price Index",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.2,
+                      "position":  [
+                                       240,
+                                       0
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const timestamps = $json.timestamps;\r\nif (!Array.isArray(timestamps) || timestamps.length === 0) {\r\n  throw new Error(\u0027SMARD index response contains no timestamps.\u0027);\r\n}\r\nconst latestTimestamp = Math.max(...timestamps.map(Number).filter(Number.isFinite));\r\nif (!Number.isFinite(latestTimestamp)) {\r\n  throw new Error(\u0027SMARD index response contains no valid numeric timestamp.\u0027);\r\n}\r\nreturn [{\r\n  json: {\r\n    chunk_timestamp: latestTimestamp,\r\n    series_url: \u0027https://www.smard.de/app/chart_data/4169/DE-LU/4169_DE-LU_quarterhour_\u0027 + latestTimestamp + \u0027.json\u0027\r\n  }\r\n}];"
+                                     },
+                      "id":  "smard-build-url",
+                      "name":  "Build Latest SMARD URL",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       480,
+                                       0
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "url":  "={{$json.series_url}}",
+                                         "options":  {
+                                                         "timeout":  30000
+                                                     }
+                                     },
+                      "id":  "smard-series-fetch",
+                      "name":  "Fetch SMARD Price Series",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.2,
+                      "position":  [
+                                       720,
+                                       0
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "let payload = $json.body ?? $json.data ?? $json;\r\nif (typeof payload === \u0027string\u0027) {\r\n  payload = JSON.parse(payload);\r\n}\r\nif (!Array.isArray(payload.series)) {\r\n  throw new Error(\u0027Unexpected SMARD response: series array is missing.\u0027);\r\n}\r\nconst validPairs = payload.series.filter((pair) =\u003e\r\n  Array.isArray(pair) \u0026\u0026\r\n  Number.isFinite(Number(pair[0])) \u0026\u0026\r\n  pair[1] !== null \u0026\u0026\r\n  pair[1] !== \u0027\u0027 \u0026\u0026\r\n  Number.isFinite(Number(pair[1]))\r\n);\r\nif (validPairs.length === 0) {\r\n  throw new Error(\u0027SMARD response contains no published price points.\u0027);\r\n}\r\nconst rows = validPairs.map((pair) =\u003e ({\r\n  delivery_start_ms: Number(pair[0]),\r\n  price_eur_mwh: Number(pair[1])\r\n}));\r\nfunction sqlString(value) {\r\n  if (value === null || value === undefined) return \u0027null\u0027;\r\n  return \"\u0027\" + String(value).replace(/\u0027/g, \"\u0027\u0027\") + \"\u0027\";\r\n}\r\nfunction sqlJson(value) {\r\n  return sqlString(JSON.stringify(value)) + \u0027::jsonb\u0027;\r\n}\r\nconst workflowName = \u0027market_prices_smard_de_lu\u0027;\r\nconst firstTimestamp = rows[0].delivery_start_ms;\r\nconst requestUrl = \u0027https://www.smard.de/app/chart_data/4169/DE-LU/4169_DE-LU_quarterhour_\u0027 + firstTimestamp + \u0027.json\u0027;\r\nconst rawJson = JSON.stringify(payload);\r\nconst sql = [\r\n  \u0027with source_market as (\u0027,\r\n  \u0027  select s.id as source_id, m.id as market_id\u0027,\r\n  \u0027  from energy_data.data_sources s\u0027,\r\n  \u0027  cross join energy_data.markets m\u0027,\r\n  \"  where s.code = \u0027smard\u0027\",\r\n  \"    and m.country_code = \u0027DE\u0027\",\r\n  \"    and m.bidding_zone = \u0027DE-LU\u0027\",\r\n  \u0027), raw_payload as (\u0027,\r\n  \u0027  insert into energy_data.raw_api_payloads (source_id, workflow_name, request_url, request_hash, response_status, payload)\u0027,\r\n  \u0027  select source_id, \u0027 + sqlString(workflowName) + \u0027, \u0027 + sqlString(requestUrl) + \u0027, md5(\u0027 + sqlString(rawJson) + \u0027), 200, \u0027 + sqlJson(payload),\r\n  \u0027  from source_market\u0027,\r\n  \u0027  returning id\u0027,\r\n  \u0027), input_rows as (\u0027,\r\n  \u0027  select *\u0027,\r\n  \u0027  from jsonb_to_recordset(\u0027 + sqlJson(rows) + \u0027) as x(delivery_start_ms bigint, price_eur_mwh numeric)\u0027,\r\n  \u0027), upserted as (\u0027,\r\n  \u0027  insert into energy_data.market_price_points (\u0027,\r\n  \u0027    source_id, market_id, product, delivery_start, delivery_end, price_eur_mwh, currency,\u0027,\r\n  \u0027    source_published_at, source_position, resolution, raw_payload_id\u0027,\r\n  \u0027  )\u0027,\r\n  \u0027  select\u0027,\r\n  \"    sm.source_id, sm.market_id, \u0027quarter_hour_day_ahead\u0027,\",\r\n  \"    to_timestamp(i.delivery_start_ms / 1000.0), to_timestamp(i.delivery_start_ms / 1000.0) + interval \u002715 minutes\u0027,\",\r\n  \"    i.price_eur_mwh, \u0027EUR\u0027, timestamp with time zone \u00271970-01-01 00:00:00+00\u0027,\",\r\n  \"    row_number() over (order by i.delivery_start_ms), \u0027PT15M\u0027, rp.id\",\r\n  \u0027  from input_rows i\u0027,\r\n  \u0027  cross join source_market sm\u0027,\r\n  \u0027  cross join raw_payload rp\u0027,\r\n  \u0027  on conflict (source_id, market_id, product, delivery_start, delivery_end, source_published_at) do update\u0027,\r\n  \u0027  set price_eur_mwh = excluded.price_eur_mwh,\u0027,\r\n  \u0027      source_position = excluded.source_position,\u0027,\r\n  \u0027      resolution = excluded.resolution,\u0027,\r\n  \u0027      raw_payload_id = excluded.raw_payload_id,\u0027,\r\n  \u0027      ingested_at = now()\u0027,\r\n  \u0027  returning 1\u0027,\r\n  \u0027)\u0027,\r\n  \u0027insert into energy_data.ingestion_runs (workflow_name, source_id, finished_at, status, records_read, records_written)\u0027,\r\n  \u0027select \u0027 + sqlString(workflowName) + \u0027, sm.source_id, now(), \\\u0027success\\\u0027, \u0027 + payload.series.length + \u0027, count(*)::integer\u0027,\r\n  \u0027from source_market sm\u0027,\r\n  \u0027cross join upserted\u0027,\r\n  \u0027group by sm.source_id;\u0027\r\n].join(\u0027\\n\u0027);\r\nreturn [{\r\n  json: {\r\n    workflow_name: workflowName,\r\n    source: \u0027smard\u0027,\r\n    records_read: payload.series.length,\r\n    records_valid: rows.length,\r\n    payload_created_ms: payload.meta_data?.created ?? null,\r\n    sql\r\n  }\r\n}];"
+                                     },
+                      "id":  "smard-parse",
+                      "name":  "Parse SMARD JSON",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       960,
+                                       0
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "operation":  "executeQuery",
+                                         "query":  "={{$json.sql}}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "smard-db",
+                      "name":  "Store SMARD Price Points",
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.5,
+                      "position":  [
+                                       1200,
+                                       0
+                                   ]
+                  }
+              ],
+    "connections":  {
+                        "Every 15 minutes":  {
+                                                 "main":  [
+                                                              [
+                                                                  {
+                                                                      "node":  "Fetch SMARD Price Index",
+                                                                      "type":  "main",
+                                                                      "index":  0
+                                                                  }
+                                                              ]
+                                                          ]
+                                             },
+                        "Fetch SMARD Price Index":  {
+                                                        "main":  [
+                                                                     [
+                                                                         {
+                                                                             "node":  "Build Latest SMARD URL",
+                                                                             "type":  "main",
+                                                                             "index":  0
+                                                                         }
+                                                                     ]
+                                                                 ]
+                                                    },
+                        "Build Latest SMARD URL":  {
+                                                       "main":  [
+                                                                    [
+                                                                        {
+                                                                            "node":  "Fetch SMARD Price Series",
+                                                                            "type":  "main",
+                                                                            "index":  0
+                                                                        }
+                                                                    ]
+                                                                ]
+                                                   },
+                        "Fetch SMARD Price Series":  {
+                                                         "main":  [
+                                                                      [
+                                                                          {
+                                                                              "node":  "Parse SMARD JSON",
+                                                                              "type":  "main",
+                                                                              "index":  0
+                                                                          }
+                                                                      ]
+                                                                  ]
+                                                     },
+                        "Parse SMARD JSON":  {
+                                                 "main":  [
+                                                              [
+                                                                  {
+                                                                      "node":  "Store SMARD Price Points",
+                                                                      "type":  "main",
+                                                                      "index":  0
+                                                                  }
+                                                              ]
+                                                          ]
+                                             }
+                    },
+    "active":  false,
+    "settings":  {
+                     "executionOrder":  "v1"
+                 },
+    "pinData":  {
+
+                },
+    "tags":  [
+
+             ]
+}

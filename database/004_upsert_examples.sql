@@ -188,13 +188,14 @@ select
   end as interval_end,
   max(p.price_eur_mwh) as high_price_eur_mwh,
   min(p.price_eur_mwh) as low_price_eur_mwh,
-  (array_agg(p.price_eur_mwh order by coalesce(p.source_published_at, p.ingested_at) desc, p.ingested_at desc))[1] as last_price_eur_mwh,
+  (array_agg(p.price_eur_mwh order by p.delivery_start desc, p.ingested_at desc))[1] as last_price_eur_mwh,
   count(*) as observation_count,
-  'market_price_points' as calculated_from
+  'day_ahead_interval_prices' as calculated_from
 from energy_data.market_price_points p
 where p.delivery_start >= $2::timestamptz
   and p.delivery_start < $3::timestamptz
   and $1 in ('15m', '60m')
+  and p.product in ('day_ahead', 'quarter_hour_day_ahead', 'hour_day_ahead')
 group by p.source_id, p.market_id, interval_start, interval_end
 on conflict (source_id, market_id, interval_type, interval_start, interval_end) do update
 set
