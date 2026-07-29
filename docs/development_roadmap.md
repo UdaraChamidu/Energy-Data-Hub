@@ -1,6 +1,6 @@
 # Development Roadmap
 
-This roadmap reflects the Germany-first implementation status. Database scripts and importable n8n workflows are prepared; live deployment and evidence still require access to the client's n8n and PostgreSQL instances.
+This roadmap reflects the Germany-first implementation status. Database scripts, importable n8n workflows, and an importable Grafana dashboard are prepared. Live deployment evidence and client visual approval remain.
 
 ## Current Status
 
@@ -11,7 +11,8 @@ This roadmap reflects the Germany-first implementation status. Database scripts 
 | Frequency and calculated deviation workflows | Prepared; not live-verified in client n8n |
 | ENTSO-E and SMARD price workflows | Prepared; ENTSO-E token required |
 | Price aggregate and health workflows | Prepared; not live-verified in client n8n |
-| Grafana, deployment, retention, and handover | Pending |
+| Grafana dashboard code | Prepared and locally validated; live import/review pending |
+| Deployment, retention, and handover | Pending |
 
 ## Phase 0: Client Approval And Access Collection
 
@@ -130,8 +131,9 @@ Goals:
 
 Deliverables:
 
-- Dashboard JSON export if access is provided.
-- Query documentation in `docs/`.
+- Generated importable dashboard JSON in `grafana/dashboards/`.
+- Dashboard generator and automated validator.
+- Import and query documentation in `grafana/README.md`.
 - Screenshot or review notes.
 
 Exit criteria:

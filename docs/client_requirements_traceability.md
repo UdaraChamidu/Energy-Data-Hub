@@ -2,7 +2,7 @@
 
 ## Confirmed First Release
 
-The first release is Germany-first and covers data ingestion only. n8n collects the data, PostgreSQL stores it, and Grafana/web-interface work follows later.
+The first release is Germany-first. n8n collects the data, PostgreSQL stores it, and Grafana reads only from PostgreSQL.
 
 | Client requirement | Implemented source/logic | PostgreSQL target | n8n workflow | Status |
 | --- | --- | --- | --- | --- |
@@ -11,11 +11,12 @@ The first release is Germany-first and covers data ingestion only. n8n collects 
 | Grid time and time deviation | Clearly labelled approximation integrated from stored frequency samples | `grid_time_deviation_measurements` | `grid_time_deviation_calculated` | Implemented with source limitation |
 | Official DE-LU price intervals | ENTSO-E Transparency Platform `A44` day-ahead price document | `market_price_points` | `market_prices_entsoe_de_lu` | Implemented; token required |
 | SMARD.de data source named by client | SMARD public JSON wholesale-price series, filter `4169`, region `DE-LU`, quarter-hour resolution | `market_price_points` | `market_prices_smard_de_lu` | Implemented as independent official-source fallback/cross-check |
-| Current price panel | Price whose delivery interval contains the current timestamp, ENTSO-E preferred and SMARD fallback | `v_grafana_current_market_price` | Database view | Implemented |
+| Current price panel | Price whose delivery interval contains the current timestamp for the dashboard-selected source | `market_price_points` | Grafana PostgreSQL query | Implemented |
 | 15-minute High/Low/Last | Derived from stored interval price observations | `market_price_ohlc` | `market_price_ohlc_builder` | Implemented with day-ahead limitation |
 | 60-minute High/Low/Last | High/low across quarter-hours; last is the final quarter-hour in the hour | `market_price_ohlc` | `market_price_ohlc_builder` | Implemented with day-ahead limitation |
 | Daily stat values | Current Europe/Berlin calendar-day high/low by source and interval | `v_grafana_market_price_stats_today` | Database view | Implemented |
 | Ingestion monitoring | Stale-data checks with one open alert per data domain | `ingestion_runs`, `ingestion_alerts` | `ingestion_health_monitor` | Implemented |
+| Germany Grafana dashboard | Required time series and stat panels, Europe/Berlin timezone, one shared price-source selector | PostgreSQL tables and Grafana views | `grafana/dashboards/germany-energy-monitoring.json` | Prepared and validated; live import/review pending |
 
 ## Source Decision
 

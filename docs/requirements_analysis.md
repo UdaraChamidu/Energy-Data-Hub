@@ -196,7 +196,7 @@ Libraries/tools:
 Access and hosting:
 
 - PostgreSQL host, port, database name, username, password, SSL mode.
-- Grafana URL, admin or datasource-management access if dashboards will be configured later.
+- Grafana URL and admin or datasource-management access. Received for the current build; the PostgreSQL datasource is connected.
 - n8n URL and access credentials.
 - Deployment target: client server, VPS, Docker host, or managed service.
 - Backup policy and existing backup location.
