@@ -26,7 +26,6 @@ const requiredPanelTitles = [
 const requiredSqlObjects = [
   'energy_data.v_grafana_grid_frequency',
   'energy_data.v_grafana_grid_time_deviation',
-  'energy_data.v_grid_time_deviation_latest',
   'energy_data.market_price_points',
   'energy_data.market_price_ohlc',
   'energy_data.v_grafana_market_price_stats_today',
@@ -81,6 +80,22 @@ const priceSource = dashboard.templating?.list?.find(
 );
 if (!priceSource) {
   fail('price_source variable is missing');
+} else if (priceSource.type !== 'custom') {
+  fail('price_source must be a static custom variable');
+} else if (priceSource.current?.value !== 'auto') {
+  fail('price_source must default to automatic fallback');
+}
+
+const gridTimePanel = panels.find((panel) => panel.title === 'Grid Time');
+if (gridTimePanel?.fieldConfig?.defaults?.unit !== 'time:HH:mm:ss') {
+  fail('Grid Time must use the HH:mm:ss timestamp unit');
+}
+if (
+  !gridTimePanel?.targets?.some((target) =>
+    target.rawSql?.includes('* 1000'),
+  )
+) {
+  fail('Grid Time must return Unix epoch milliseconds');
 }
 
 const pricePanels = panels.filter((panel) =>

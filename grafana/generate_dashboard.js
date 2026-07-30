@@ -118,6 +118,7 @@ function statPanel({
   decimals,
   colorMode = 'value',
   textMode = 'auto',
+  showAllValues = false,
 }) {
   return {
     datasource,
@@ -146,7 +147,8 @@ function statPanel({
       reduceOptions: {
         calcs: ['lastNotNull'],
         fields: '',
-        values: false,
+        limit: 1,
+        values: showAllValues,
       },
       showPercentChange: false,
       textMode,
@@ -279,50 +281,123 @@ WHERE $__timeFilter("time")
 ORDER BY "time";`;
 
 const gridTimeSql = `SELECT
-  to_char(
-    grid_time AT TIME ZONE 'Europe/Berlin',
-    'HH24:MI:SS'
-  ) AS "Grid Time"
-FROM energy_data.v_grid_time_deviation_latest
+  round(
+    extract(
+      epoch FROM coalesce(
+        grid_time,
+        "time" + make_interval(secs => deviation_seconds::double precision)
+      )
+    ) * 1000
+  )::bigint AS "Grid Time"
+FROM energy_data.v_grafana_grid_time_deviation
 WHERE country_code = 'DE'
+  AND deviation_seconds IS NOT NULL
+ORDER BY "time" DESC
 LIMIT 1;`;
 
-const currentPriceSql = `SELECT
+const priceSourceVariable = '${price_source:sqlstring}';
+const priceSourcePriority =
+  "CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END";
+
+const currentPriceSql = `WITH chosen_source AS (
+  SELECT s.id
+  FROM energy_data.data_sources s
+  WHERE s.code IN ('entsoe', 'smard')
+    AND (
+      ${priceSourceVariable} = 'auto'
+      OR s.code = ${priceSourceVariable}
+    )
+    AND EXISTS (
+      SELECT 1
+      FROM energy_data.market_price_points candidate
+      JOIN energy_data.markets candidate_market
+        ON candidate_market.id = candidate.market_id
+      WHERE candidate.source_id = s.id
+        AND now() >= candidate.delivery_start
+        AND now() < candidate.delivery_end
+        AND candidate.product IN (
+          'day_ahead',
+          'quarter_hour_day_ahead',
+          'hour_day_ahead'
+        )
+        AND candidate_market.country_code = 'DE'
+    )
+  ORDER BY ${priceSourcePriority}
+  LIMIT 1
+)
+SELECT
   p.price_eur_mwh AS "Current Price"
 FROM energy_data.market_price_points p
-JOIN energy_data.data_sources s ON s.id = p.source_id
+JOIN chosen_source selected ON selected.id = p.source_id
 JOIN energy_data.markets m ON m.id = p.market_id
 WHERE now() >= p.delivery_start
   AND now() < p.delivery_end
   AND p.product IN ('day_ahead', 'quarter_hour_day_ahead', 'hour_day_ahead')
-  AND s.code = \${price_source:sqlstring}
   AND m.country_code = 'DE'
 ORDER BY p.ingested_at DESC
 LIMIT 1;`;
 
 function priceChartSql(intervalType) {
-  return `SELECT
+  return `WITH chosen_source AS (
+  SELECT s.id
+  FROM energy_data.data_sources s
+  WHERE s.code IN ('entsoe', 'smard')
+    AND (
+      ${priceSourceVariable} = 'auto'
+      OR s.code = ${priceSourceVariable}
+    )
+    AND EXISTS (
+      SELECT 1
+      FROM energy_data.market_price_ohlc candidate
+      JOIN energy_data.markets candidate_market
+        ON candidate_market.id = candidate.market_id
+      WHERE candidate.source_id = s.id
+        AND candidate.interval_type = '${intervalType}'
+        AND $__timeFilter(candidate.interval_start)
+        AND candidate_market.country_code = 'DE'
+    )
+  ORDER BY ${priceSourcePriority}
+  LIMIT 1
+)
+SELECT
   p.interval_start AS "time",
   p.high_price_eur_mwh AS "High",
   p.low_price_eur_mwh AS "Low",
   p.last_price_eur_mwh AS "Last"
 FROM energy_data.market_price_ohlc p
-JOIN energy_data.data_sources s ON s.id = p.source_id
+JOIN chosen_source selected ON selected.id = p.source_id
 JOIN energy_data.markets m ON m.id = p.market_id
 WHERE $__timeFilter(p.interval_start)
   AND p.interval_type = '${intervalType}'
-  AND s.code = \${price_source:sqlstring}
   AND m.country_code = 'DE'
 ORDER BY p.interval_start;`;
 }
 
 function priceStatSql(intervalType, valueColumn, alias) {
-  return `SELECT
-  ${valueColumn} AS "${alias}"
-FROM energy_data.v_grafana_market_price_stats_today
-WHERE source_code = \${price_source:sqlstring}
-  AND country_code = 'DE'
-  AND interval_type = '${intervalType}'
+  return `WITH chosen_source AS (
+  SELECT s.code
+  FROM energy_data.data_sources s
+  WHERE s.code IN ('entsoe', 'smard')
+    AND (
+      ${priceSourceVariable} = 'auto'
+      OR s.code = ${priceSourceVariable}
+    )
+    AND EXISTS (
+      SELECT 1
+      FROM energy_data.v_grafana_market_price_stats_today candidate
+      WHERE candidate.source_code = s.code
+        AND candidate.country_code = 'DE'
+        AND candidate.interval_type = '${intervalType}'
+    )
+  ORDER BY ${priceSourcePriority}
+  LIMIT 1
+)
+SELECT
+  stats.${valueColumn} AS "${alias}"
+FROM energy_data.v_grafana_market_price_stats_today stats
+JOIN chosen_source selected ON selected.code = stats.source_code
+WHERE stats.country_code = 'DE'
+  AND stats.interval_type = '${intervalType}'
 LIMIT 1;`;
 }
 
@@ -365,14 +440,15 @@ const panels = [
       'Latest calculated grid time displayed in Europe/Berlin local time.',
     gridPos: { h: 8, w: 6, x: 18, y: 9 },
     rawSql: gridTimeSql,
-    textMode: 'value_and_name',
+    unit: 'time:HH:mm:ss',
+    textMode: 'value',
   }),
   rowPanel(5, 'Electricity Prices', 17),
   statPanel({
     id: 6,
     title: 'Current Delivery Price',
     description:
-      'Price for the delivery interval active now from the selected source. This is day-ahead interval data, not a continuous intraday trade.',
+      'Price for the delivery interval active now. Auto prefers ENTSO-E and falls back to SMARD. This is day-ahead interval data, not a continuous intraday trade.',
     gridPos: { h: 8, w: 6, x: 0, y: 18 },
     rawSql: currentPriceSql,
     unit: 'suffix: EUR/MWh',
@@ -460,13 +536,6 @@ const panels = [
   healthTablePanel(15, 41),
 ];
 
-const priceSourceQuery = `SELECT
-  s.code AS __text,
-  s.code AS __value
-FROM energy_data.data_sources s
-WHERE s.code IN ('entsoe', 'smard')
-ORDER BY CASE s.code WHEN 'entsoe' THEN 1 ELSE 2 END;`;
-
 const dashboard = {
   __inputs: [
     {
@@ -544,23 +613,38 @@ const dashboard = {
       {
         current: {
           selected: true,
-          text: 'entsoe',
-          value: 'entsoe',
+          text: 'Auto (ENTSO-E, then SMARD)',
+          value: 'auto',
         },
-        datasource,
-        definition: priceSourceQuery,
+        definition: 'Auto : auto,ENTSO-E : entsoe,SMARD : smard',
         hide: 0,
         includeAll: false,
         label: 'Price source',
         multi: false,
         name: 'price_source',
-        options: [],
-        query: priceSourceQuery,
-        refresh: 1,
+        options: [
+          {
+            selected: true,
+            text: 'Auto (ENTSO-E, then SMARD)',
+            value: 'auto',
+          },
+          {
+            selected: false,
+            text: 'ENTSO-E',
+            value: 'entsoe',
+          },
+          {
+            selected: false,
+            text: 'SMARD',
+            value: 'smard',
+          },
+        ],
+        query: 'Auto : auto,ENTSO-E : entsoe,SMARD : smard',
+        refresh: 0,
         regex: '',
         skipUrlSync: false,
         sort: 0,
-        type: 'query',
+        type: 'custom',
       },
     ],
   },
@@ -575,7 +659,7 @@ const dashboard = {
   timezone: 'Europe/Berlin',
   title: 'Germany Energy Monitoring',
   uid: 'energy-data-hub-de',
-  version: 1,
+  version: 3,
   weekStart: 'monday',
 };
 

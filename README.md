@@ -110,6 +110,8 @@ No n8n community nodes are required.
 
 Never commit real passwords or tokens. [`.env.example`](.env.example) contains placeholders only.
 
+See [`api/entsoe_token_setup.md`](api/entsoe_token_setup.md) for the free ENTSO-E registration, API-access request, token generation, and n8n configuration steps.
+
 ## Installation
 
 ### 1. Create The PostgreSQL Objects
@@ -186,7 +188,7 @@ In Grafana:
 4. Upload `germany-energy-monitoring.json`.
 5. Map **Energy Data Hub PostgreSQL** to the connected PostgreSQL datasource.
 6. Click **Import**.
-7. Select `entsoe` or `smard` using the dashboard's **Price source** control.
+7. Leave **Price source** on `Auto`, or force `ENTSO-E`/`SMARD` for comparison.
 
 Do not paste the classic dashboard JSON into the `{}` **Edit as code** sidebar. That editor is not the dashboard-import page.
 
@@ -322,10 +324,11 @@ Leave the new-dashboard editor, return to **Dashboards**, open the **New** drop-
 
 ### A Price Panel Shows No Data
 
-- Switch the dashboard **Price source** between `entsoe` and `smard`.
+- Leave **Price source** on `Auto`, or switch between `ENTSO-E` and `SMARD`.
 - Confirm the selected source has an interval covering the current time.
 - Run the OHLC builder after the price collector.
 - Query `v_grafana_market_price_stats_today`.
+- Run [`grafana/dashboard_data_diagnostics.sql`](grafana/dashboard_data_diagnostics.sql) to see exactly which source and interval is missing.
 
 ### ENTSO-E Returns Authentication Errors
 

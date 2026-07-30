@@ -324,7 +324,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "time:HH:mm:ss"
         },
         "overrides": []
       },
@@ -345,10 +345,11 @@
             "lastNotNull"
           ],
           "fields": "",
+          "limit": 1,
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "value_and_name",
+        "textMode": "value",
         "wideLayout": true
       },
       "targets": [
@@ -360,7 +361,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  to_char(\n    grid_time AT TIME ZONE 'Europe/Berlin',\n    'HH24:MI:SS'\n  ) AS \"Grid Time\"\nFROM energy_data.v_grid_time_deviation_latest\nWHERE country_code = 'DE'\nLIMIT 1;",
+          "rawSql": "SELECT\n  round(\n    extract(\n      epoch FROM coalesce(\n        grid_time,\n        \"time\" + make_interval(secs => deviation_seconds::double precision)\n      )\n    ) * 1000\n  )::bigint AS \"Grid Time\"\nFROM energy_data.v_grafana_grid_time_deviation\nWHERE country_code = 'DE'\n  AND deviation_seconds IS NOT NULL\nORDER BY \"time\" DESC\nLIMIT 1;",
           "refId": "A"
         }
       ],
@@ -385,7 +386,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "${DS_POSTGRESQL}"
       },
-      "description": "Price for the delivery interval active now from the selected source. This is day-ahead interval data, not a continuous intraday trade.",
+      "description": "Price for the delivery interval active now. Auto prefers ENTSO-E and falls back to SMARD. This is day-ahead interval data, not a continuous intraday trade.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -424,6 +425,7 @@
             "lastNotNull"
           ],
           "fields": "",
+          "limit": 1,
           "values": false
         },
         "showPercentChange": false,
@@ -439,7 +441,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  p.price_eur_mwh AS \"Current Price\"\nFROM energy_data.market_price_points p\nJOIN energy_data.data_sources s ON s.id = p.source_id\nJOIN energy_data.markets m ON m.id = p.market_id\nWHERE now() >= p.delivery_start\n  AND now() < p.delivery_end\n  AND p.product IN ('day_ahead', 'quarter_hour_day_ahead', 'hour_day_ahead')\n  AND s.code = ${price_source:sqlstring}\n  AND m.country_code = 'DE'\nORDER BY p.ingested_at DESC\nLIMIT 1;",
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.id\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      ${price_source:sqlstring} = 'auto'\n      OR s.code = ${price_source:sqlstring}\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.market_price_points candidate\n      JOIN energy_data.markets candidate_market\n        ON candidate_market.id = candidate.market_id\n      WHERE candidate.source_id = s.id\n        AND now() >= candidate.delivery_start\n        AND now() < candidate.delivery_end\n        AND candidate.product IN (\n          'day_ahead',\n          'quarter_hour_day_ahead',\n          'hour_day_ahead'\n        )\n        AND candidate_market.country_code = 'DE'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  p.price_eur_mwh AS \"Current Price\"\nFROM energy_data.market_price_points p\nJOIN chosen_source selected ON selected.id = p.source_id\nJOIN energy_data.markets m ON m.id = p.market_id\nWHERE now() >= p.delivery_start\n  AND now() < p.delivery_end\n  AND p.product IN ('day_ahead', 'quarter_hour_day_ahead', 'hour_day_ahead')\n  AND m.country_code = 'DE'\nORDER BY p.ingested_at DESC\nLIMIT 1;",
           "refId": "A"
         }
       ],
@@ -536,7 +538,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  p.interval_start AS \"time\",\n  p.high_price_eur_mwh AS \"High\",\n  p.low_price_eur_mwh AS \"Low\",\n  p.last_price_eur_mwh AS \"Last\"\nFROM energy_data.market_price_ohlc p\nJOIN energy_data.data_sources s ON s.id = p.source_id\nJOIN energy_data.markets m ON m.id = p.market_id\nWHERE $__timeFilter(p.interval_start)\n  AND p.interval_type = '15m'\n  AND s.code = ${price_source:sqlstring}\n  AND m.country_code = 'DE'\nORDER BY p.interval_start;",
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.id\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      ${price_source:sqlstring} = 'auto'\n      OR s.code = ${price_source:sqlstring}\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.market_price_ohlc candidate\n      JOIN energy_data.markets candidate_market\n        ON candidate_market.id = candidate.market_id\n      WHERE candidate.source_id = s.id\n        AND candidate.interval_type = '15m'\n        AND $__timeFilter(candidate.interval_start)\n        AND candidate_market.country_code = 'DE'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  p.interval_start AS \"time\",\n  p.high_price_eur_mwh AS \"High\",\n  p.low_price_eur_mwh AS \"Low\",\n  p.last_price_eur_mwh AS \"Last\"\nFROM energy_data.market_price_ohlc p\nJOIN chosen_source selected ON selected.id = p.source_id\nJOIN energy_data.markets m ON m.id = p.market_id\nWHERE $__timeFilter(p.interval_start)\n  AND p.interval_type = '15m'\n  AND m.country_code = 'DE'\nORDER BY p.interval_start;",
           "refId": "A"
         }
       ],
@@ -633,7 +635,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  p.interval_start AS \"time\",\n  p.high_price_eur_mwh AS \"High\",\n  p.low_price_eur_mwh AS \"Low\",\n  p.last_price_eur_mwh AS \"Last\"\nFROM energy_data.market_price_ohlc p\nJOIN energy_data.data_sources s ON s.id = p.source_id\nJOIN energy_data.markets m ON m.id = p.market_id\nWHERE $__timeFilter(p.interval_start)\n  AND p.interval_type = '60m'\n  AND s.code = ${price_source:sqlstring}\n  AND m.country_code = 'DE'\nORDER BY p.interval_start;",
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.id\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      ${price_source:sqlstring} = 'auto'\n      OR s.code = ${price_source:sqlstring}\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.market_price_ohlc candidate\n      JOIN energy_data.markets candidate_market\n        ON candidate_market.id = candidate.market_id\n      WHERE candidate.source_id = s.id\n        AND candidate.interval_type = '60m'\n        AND $__timeFilter(candidate.interval_start)\n        AND candidate_market.country_code = 'DE'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  p.interval_start AS \"time\",\n  p.high_price_eur_mwh AS \"High\",\n  p.low_price_eur_mwh AS \"Low\",\n  p.last_price_eur_mwh AS \"Last\"\nFROM energy_data.market_price_ohlc p\nJOIN chosen_source selected ON selected.id = p.source_id\nJOIN energy_data.markets m ON m.id = p.market_id\nWHERE $__timeFilter(p.interval_start)\n  AND p.interval_type = '60m'\n  AND m.country_code = 'DE'\nORDER BY p.interval_start;",
           "refId": "A"
         }
       ],
@@ -697,6 +699,7 @@
             "lastNotNull"
           ],
           "fields": "",
+          "limit": 1,
           "values": false
         },
         "showPercentChange": false,
@@ -712,7 +715,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  low_price_eur_mwh AS \"15-Minute Low\"\nFROM energy_data.v_grafana_market_price_stats_today\nWHERE source_code = ${price_source:sqlstring}\n  AND country_code = 'DE'\n  AND interval_type = '15m'\nLIMIT 1;",
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.code\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      ${price_source:sqlstring} = 'auto'\n      OR s.code = ${price_source:sqlstring}\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.v_grafana_market_price_stats_today candidate\n      WHERE candidate.source_code = s.code\n        AND candidate.country_code = 'DE'\n        AND candidate.interval_type = '15m'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  stats.low_price_eur_mwh AS \"15-Minute Low\"\nFROM energy_data.v_grafana_market_price_stats_today stats\nJOIN chosen_source selected ON selected.code = stats.source_code\nWHERE stats.country_code = 'DE'\n  AND stats.interval_type = '15m'\nLIMIT 1;",
           "refId": "A"
         }
       ],
@@ -763,6 +766,7 @@
             "lastNotNull"
           ],
           "fields": "",
+          "limit": 1,
           "values": false
         },
         "showPercentChange": false,
@@ -778,7 +782,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  high_price_eur_mwh AS \"15-Minute High\"\nFROM energy_data.v_grafana_market_price_stats_today\nWHERE source_code = ${price_source:sqlstring}\n  AND country_code = 'DE'\n  AND interval_type = '15m'\nLIMIT 1;",
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.code\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      ${price_source:sqlstring} = 'auto'\n      OR s.code = ${price_source:sqlstring}\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.v_grafana_market_price_stats_today candidate\n      WHERE candidate.source_code = s.code\n        AND candidate.country_code = 'DE'\n        AND candidate.interval_type = '15m'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  stats.high_price_eur_mwh AS \"15-Minute High\"\nFROM energy_data.v_grafana_market_price_stats_today stats\nJOIN chosen_source selected ON selected.code = stats.source_code\nWHERE stats.country_code = 'DE'\n  AND stats.interval_type = '15m'\nLIMIT 1;",
           "refId": "A"
         }
       ],
@@ -829,6 +833,7 @@
             "lastNotNull"
           ],
           "fields": "",
+          "limit": 1,
           "values": false
         },
         "showPercentChange": false,
@@ -844,7 +849,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  low_price_eur_mwh AS \"60-Minute Low\"\nFROM energy_data.v_grafana_market_price_stats_today\nWHERE source_code = ${price_source:sqlstring}\n  AND country_code = 'DE'\n  AND interval_type = '60m'\nLIMIT 1;",
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.code\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      ${price_source:sqlstring} = 'auto'\n      OR s.code = ${price_source:sqlstring}\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.v_grafana_market_price_stats_today candidate\n      WHERE candidate.source_code = s.code\n        AND candidate.country_code = 'DE'\n        AND candidate.interval_type = '60m'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  stats.low_price_eur_mwh AS \"60-Minute Low\"\nFROM energy_data.v_grafana_market_price_stats_today stats\nJOIN chosen_source selected ON selected.code = stats.source_code\nWHERE stats.country_code = 'DE'\n  AND stats.interval_type = '60m'\nLIMIT 1;",
           "refId": "A"
         }
       ],
@@ -895,6 +900,7 @@
             "lastNotNull"
           ],
           "fields": "",
+          "limit": 1,
           "values": false
         },
         "showPercentChange": false,
@@ -910,7 +916,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  high_price_eur_mwh AS \"60-Minute High\"\nFROM energy_data.v_grafana_market_price_stats_today\nWHERE source_code = ${price_source:sqlstring}\n  AND country_code = 'DE'\n  AND interval_type = '60m'\nLIMIT 1;",
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.code\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      ${price_source:sqlstring} = 'auto'\n      OR s.code = ${price_source:sqlstring}\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.v_grafana_market_price_stats_today candidate\n      WHERE candidate.source_code = s.code\n        AND candidate.country_code = 'DE'\n        AND candidate.interval_type = '60m'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  stats.high_price_eur_mwh AS \"60-Minute High\"\nFROM energy_data.v_grafana_market_price_stats_today stats\nJOIN chosen_source selected ON selected.code = stats.source_code\nWHERE stats.country_code = 'DE'\n  AND stats.interval_type = '60m'\nLIMIT 1;",
           "refId": "A"
         }
       ],
@@ -1061,26 +1067,38 @@
       {
         "current": {
           "selected": true,
-          "text": "entsoe",
-          "value": "entsoe"
+          "text": "Auto (ENTSO-E, then SMARD)",
+          "value": "auto"
         },
-        "datasource": {
-          "type": "grafana-postgresql-datasource",
-          "uid": "${DS_POSTGRESQL}"
-        },
-        "definition": "SELECT\n  s.code AS __text,\n  s.code AS __value\nFROM energy_data.data_sources s\nWHERE s.code IN ('entsoe', 'smard')\nORDER BY CASE s.code WHEN 'entsoe' THEN 1 ELSE 2 END;",
+        "definition": "Auto : auto,ENTSO-E : entsoe,SMARD : smard",
         "hide": 0,
         "includeAll": false,
         "label": "Price source",
         "multi": false,
         "name": "price_source",
-        "options": [],
-        "query": "SELECT\n  s.code AS __text,\n  s.code AS __value\nFROM energy_data.data_sources s\nWHERE s.code IN ('entsoe', 'smard')\nORDER BY CASE s.code WHEN 'entsoe' THEN 1 ELSE 2 END;",
-        "refresh": 1,
+        "options": [
+          {
+            "selected": true,
+            "text": "Auto (ENTSO-E, then SMARD)",
+            "value": "auto"
+          },
+          {
+            "selected": false,
+            "text": "ENTSO-E",
+            "value": "entsoe"
+          },
+          {
+            "selected": false,
+            "text": "SMARD",
+            "value": "smard"
+          }
+        ],
+        "query": "Auto : auto,ENTSO-E : entsoe,SMARD : smard",
+        "refresh": 0,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
-        "type": "query"
+        "type": "custom"
       }
     ]
   },
@@ -1111,6 +1129,6 @@
   "timezone": "Europe/Berlin",
   "title": "Germany Energy Monitoring",
   "uid": "energy-data-hub-de",
-  "version": 1,
+  "version": 3,
   "weekStart": "monday"
 }

@@ -29,7 +29,9 @@ This folder contains the Germany-first Grafana dashboard requested in the client
 5. Map `Energy Data Hub PostgreSQL` to the PostgreSQL datasource already connected to the `grafana` database.
 6. Keep the UID `energy-data-hub-de` unless that UID already exists.
 7. Click **Import**.
-8. At the top of the dashboard, select `entsoe` or `smard` using the **Price source** control. All price panels use that same selected source.
+8. At the top of the dashboard, use **Price source**:
+   - `Auto` prefers ENTSO-E and falls back to SMARD when ENTSO-E has no matching data.
+   - `ENTSO-E` and `SMARD` force one source for troubleshooting or comparison.
 
 ## Expected Settings
 
@@ -47,6 +49,19 @@ This folder contains the Germany-first Grafana dashboard requested in the client
 - The current price is the price for the delivery interval active now, not a continuous intraday trade.
 - A 15-minute interval normally has one clearing price, so its derived High, Low and Last values can be equal.
 - True continuous EPEX intraday High/Low/Last requires a licensed trade-data source.
+
+## No-Data Troubleshooting
+
+Twelve hours is enough time for the price panels to populate. A successful price collector followed by one successful OHLC-builder run is sufficient.
+
+Run `grafana/dashboard_data_diagnostics.sql` against PostgreSQL. The important results are:
+
+- `market_price_points` must contain `entsoe` or `smard` rows covering the current date.
+- `market_price_ohlc` must contain both `15m` and `60m` rows.
+- `v_grafana_market_price_stats_today` must return rows for the current Europe/Berlin date.
+- If these are empty, inspect the corresponding n8n workflow executions before changing Grafana.
+
+If SMARD panels work but ENTSO-E panels do not, Grafana and the OHLC pipeline are working. Inspect the latest `market_prices_entsoe_de_lu` execution in n8n, especially the `Fetch ENTSO-E Prices` node. Verify that `ENTSOE_SECURITY_TOKEN` is available inside the running n8n service and that the response contains a `TimeSeries` element.
 
 ## Dashboard As Code
 
