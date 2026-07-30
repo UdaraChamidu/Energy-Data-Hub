@@ -33,6 +33,31 @@ This folder contains the Germany-first Grafana dashboard requested in the client
    - `Auto` prefers ENTSO-E and falls back to SMARD when ENTSO-E has no matching data.
    - `ENTSO-E` and `SMARD` force one source for troubleshooting or comparison.
 
+## External Sharing
+
+Grafana externally shared dashboards do not support template variables or panel
+queries that reference them. The normal dashboard uses `price_source`, so sharing
+that dashboard externally causes its price panels to return no data.
+
+Use the dedicated external dashboard instead:
+
+1. Generate and validate the dashboard files:
+
+   ```powershell
+   node grafana\generate_dashboard.js
+   node scripts\validate_grafana_dashboard.js
+   ```
+
+2. Import `grafana/dashboards/germany-energy-monitoring-external.json`.
+3. Map it to the Energy Data Hub PostgreSQL datasource.
+4. Save the dashboard, then select **Share externally**.
+5. Copy and test the external link in a private browser window.
+
+The external dashboard has a separate UID and does not overwrite the internal
+dashboard. Its price source is fixed to automatic selection: ENTSO-E is preferred
+when matching data exists, otherwise SMARD is used. Anyone with the external URL
+can view the dashboard, so revoke or pause access when it is no longer required.
+
 ## Expected Settings
 
 - Dashboard timezone: `Europe/Berlin`.

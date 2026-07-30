@@ -1,0 +1,1098 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_POSTGRESQL",
+      "label": "Energy Data Hub PostgreSQL",
+      "description": "Select the PostgreSQL datasource connected to the grafana database.",
+      "type": "datasource",
+      "pluginId": "grafana-postgresql-datasource",
+      "pluginName": "PostgreSQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-postgresql-datasource",
+      "name": "PostgreSQL",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Germany-first energy monitoring from n8n and PostgreSQL. Covers grid frequency, calculated grid-time deviation, official day-ahead prices, derived 15/60-minute values, daily records and ingestion health.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Grid Stability",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Continental Europe target frequency and measured live frequency for the Germany dashboard.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 3,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "hertz"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Target Frequency"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    8,
+                    6
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  \"time\",\n  target_hz AS \"Target Frequency\",\n  actual_hz AS \"Actual Frequency\"\nFROM energy_data.v_grafana_grid_frequency\nWHERE $__timeFilter(\"time\")\n  AND country_code = 'DE'\nORDER BY \"time\";",
+          "refId": "A"
+        }
+      ],
+      "title": "Grid Frequency - Target vs Actual",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Calculated cumulative grid-time deviation from stored frequency samples. This is an approximation, not an official grid-time API feed.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 3,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 0,
+        "y": 9
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  \"time\",\n  deviation_seconds AS \"Time Deviation\"\nFROM energy_data.v_grafana_grid_time_deviation\nWHERE $__timeFilter(\"time\")\n  AND country_code = 'DE'\nORDER BY \"time\";",
+          "refId": "A"
+        }
+      ],
+      "title": "Grid Time Deviation",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Latest calculated grid time displayed in Europe/Berlin local time.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "noValue": "No data",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "time:HH:mm:ss"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 9
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 1,
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  round(\n    extract(\n      epoch FROM coalesce(\n        grid_time,\n        \"time\" + make_interval(secs => deviation_seconds::double precision)\n      )\n    ) * 1000\n  )::double precision AS \"Grid Time\"\nFROM energy_data.v_grafana_grid_time_deviation\nWHERE country_code = 'DE'\n  AND deviation_seconds IS NOT NULL\nORDER BY \"time\" DESC\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Grid Time",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 5,
+      "panels": [],
+      "title": "Electricity Prices",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Price for the delivery interval active now. Auto prefers ENTSO-E and falls back to SMARD. This is day-ahead interval data, not a continuous intraday trade.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "noValue": "No data",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: EUR/MWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 18
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 1,
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.id\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      'auto' = 'auto'\n      OR s.code = 'auto'\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.market_price_points candidate\n      JOIN energy_data.markets candidate_market\n        ON candidate_market.id = candidate.market_id\n      WHERE candidate.source_id = s.id\n        AND now() >= candidate.delivery_start\n        AND now() < candidate.delivery_end\n        AND candidate.product IN (\n          'day_ahead',\n          'quarter_hour_day_ahead',\n          'hour_day_ahead'\n        )\n        AND candidate_market.country_code = 'DE'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  p.price_eur_mwh AS \"Current Price\"\nFROM energy_data.market_price_points p\nJOIN chosen_source selected ON selected.id = p.source_id\nJOIN energy_data.markets m ON m.id = p.market_id\nWHERE now() >= p.delivery_start\n  AND now() < p.delivery_end\n  AND p.product IN ('day_ahead', 'quarter_hour_day_ahead', 'hour_day_ahead')\n  AND m.country_code = 'DE'\nORDER BY p.ingested_at DESC\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Current Delivery Price",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Derived 15-minute values from the selected official price source. With one clearing price per interval, High, Low and Last can be equal.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: EUR/MWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 18
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.id\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      'auto' = 'auto'\n      OR s.code = 'auto'\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.market_price_ohlc candidate\n      JOIN energy_data.markets candidate_market\n        ON candidate_market.id = candidate.market_id\n      WHERE candidate.source_id = s.id\n        AND candidate.interval_type = '15m'\n        AND $__timeFilter(candidate.interval_start)\n        AND candidate_market.country_code = 'DE'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  p.interval_start AS \"time\",\n  p.high_price_eur_mwh AS \"High\",\n  p.low_price_eur_mwh AS \"Low\",\n  p.last_price_eur_mwh AS \"Last\"\nFROM energy_data.market_price_ohlc p\nJOIN chosen_source selected ON selected.id = p.source_id\nJOIN energy_data.markets m ON m.id = p.market_id\nWHERE $__timeFilter(p.interval_start)\n  AND p.interval_type = '15m'\n  AND m.country_code = 'DE'\nORDER BY p.interval_start;",
+          "refId": "A"
+        }
+      ],
+      "title": "15-Minute Price - High / Low / Last",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Hourly high and low across quarter-hour delivery prices; Last is the final quarter-hour in the hour.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: EUR/MWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.id\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      'auto' = 'auto'\n      OR s.code = 'auto'\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.market_price_ohlc candidate\n      JOIN energy_data.markets candidate_market\n        ON candidate_market.id = candidate.market_id\n      WHERE candidate.source_id = s.id\n        AND candidate.interval_type = '60m'\n        AND $__timeFilter(candidate.interval_start)\n        AND candidate_market.country_code = 'DE'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  p.interval_start AS \"time\",\n  p.high_price_eur_mwh AS \"High\",\n  p.low_price_eur_mwh AS \"Low\",\n  p.last_price_eur_mwh AS \"Last\"\nFROM energy_data.market_price_ohlc p\nJOIN chosen_source selected ON selected.id = p.source_id\nJOIN energy_data.markets m ON m.id = p.market_id\nWHERE $__timeFilter(p.interval_start)\n  AND p.interval_type = '60m'\n  AND m.country_code = 'DE'\nORDER BY p.interval_start;",
+          "refId": "A"
+        }
+      ],
+      "title": "60-Minute Price - High / Low / Last",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      },
+      "id": 9,
+      "panels": [],
+      "title": "Daily Price Records",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Lowest 15-minute price in the current Europe/Berlin calendar day.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "noValue": "No data",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: EUR/MWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 35
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 1,
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.code\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      'auto' = 'auto'\n      OR s.code = 'auto'\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.v_grafana_market_price_stats_today candidate\n      WHERE candidate.source_code = s.code\n        AND candidate.country_code = 'DE'\n        AND candidate.interval_type = '15m'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  stats.low_price_eur_mwh AS \"15-Minute Low\"\nFROM energy_data.v_grafana_market_price_stats_today stats\nJOIN chosen_source selected ON selected.code = stats.source_code\nWHERE stats.country_code = 'DE'\n  AND stats.interval_type = '15m'\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "15-Minute Low Today",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Highest 15-minute price in the current Europe/Berlin calendar day.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "noValue": "No data",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: EUR/MWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 35
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 1,
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.code\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      'auto' = 'auto'\n      OR s.code = 'auto'\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.v_grafana_market_price_stats_today candidate\n      WHERE candidate.source_code = s.code\n        AND candidate.country_code = 'DE'\n        AND candidate.interval_type = '15m'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  stats.high_price_eur_mwh AS \"15-Minute High\"\nFROM energy_data.v_grafana_market_price_stats_today stats\nJOIN chosen_source selected ON selected.code = stats.source_code\nWHERE stats.country_code = 'DE'\n  AND stats.interval_type = '15m'\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "15-Minute High Today",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Lowest hourly aggregate price in the current Europe/Berlin calendar day.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "noValue": "No data",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: EUR/MWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 35
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 1,
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.code\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      'auto' = 'auto'\n      OR s.code = 'auto'\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.v_grafana_market_price_stats_today candidate\n      WHERE candidate.source_code = s.code\n        AND candidate.country_code = 'DE'\n        AND candidate.interval_type = '60m'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  stats.low_price_eur_mwh AS \"60-Minute Low\"\nFROM energy_data.v_grafana_market_price_stats_today stats\nJOIN chosen_source selected ON selected.code = stats.source_code\nWHERE stats.country_code = 'DE'\n  AND stats.interval_type = '60m'\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "60-Minute Low Today",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Highest hourly aggregate price in the current Europe/Berlin calendar day.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "noValue": "No data",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: EUR/MWh"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 35
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "limit": 1,
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH chosen_source AS (\n  SELECT s.code\n  FROM energy_data.data_sources s\n  WHERE s.code IN ('entsoe', 'smard')\n    AND (\n      'auto' = 'auto'\n      OR s.code = 'auto'\n    )\n    AND EXISTS (\n      SELECT 1\n      FROM energy_data.v_grafana_market_price_stats_today candidate\n      WHERE candidate.source_code = s.code\n        AND candidate.country_code = 'DE'\n        AND candidate.interval_type = '60m'\n    )\n  ORDER BY CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END\n  LIMIT 1\n)\nSELECT\n  stats.high_price_eur_mwh AS \"60-Minute High\"\nFROM energy_data.v_grafana_market_price_stats_today stats\nJOIN chosen_source selected ON selected.code = stats.source_code\nWHERE stats.country_code = 'DE'\n  AND stats.interval_type = '60m'\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "60-Minute High Today",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "id": 14,
+      "panels": [],
+      "title": "System Operations",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_POSTGRESQL}"
+      },
+      "description": "Operational view of freshness and recent records for every ingestion domain.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Age (seconds)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "Healthy": {
+                        "color": "green",
+                        "index": 0,
+                        "text": "Healthy"
+                      },
+                      "Stale": {
+                        "color": "red",
+                        "index": 1,
+                        "text": "Stale"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 15,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  data_domain AS \"Data Domain\",\n  latest_data_at AS \"Latest Data\",\n  round(extract(epoch FROM data_age)::numeric, 1) AS \"Age (seconds)\",\n  records_recent AS \"Recent Records\",\n  CASE\n    WHEN data_domain = 'grid_frequency'\n      AND latest_data_at IS NOT NULL\n      AND data_age <= interval '30 seconds' THEN 'Healthy'\n    WHEN data_domain = 'grid_time_deviation'\n      AND latest_data_at IS NOT NULL\n      AND data_age <= interval '60 seconds' THEN 'Healthy'\n    WHEN data_domain = 'market_price_points'\n      AND latest_data_at IS NOT NULL\n      AND records_recent > 0 THEN 'Healthy'\n    ELSE 'Stale'\n  END AS \"Status\"\nFROM energy_data.v_ingestion_health\nORDER BY data_domain;",
+          "refId": "A"
+        }
+      ],
+      "title": "Ingestion Health",
+      "type": "table"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "energy",
+    "germany",
+    "postgresql",
+    "n8n",
+    "external"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "3s",
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m"
+    ],
+    "time_options": [
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d"
+    ]
+  },
+  "timezone": "Europe/Berlin",
+  "title": "Germany Energy Monitoring - External",
+  "uid": "energy-data-hub-de-external",
+  "version": 4,
+  "weekStart": "monday"
+}

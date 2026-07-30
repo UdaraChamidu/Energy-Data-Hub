@@ -8,6 +8,12 @@ const dashboardPath = path.join(
   'dashboards',
   'germany-energy-monitoring.json',
 );
+const externalDashboardPath = path.join(
+  projectRoot,
+  'grafana',
+  'dashboards',
+  'germany-energy-monitoring-external.json',
+);
 
 const requiredPanelTitles = [
   'Grid Frequency - Target vs Actual',
@@ -119,9 +125,34 @@ for (const panel of pricePanels) {
   }
 }
 
+if (!fs.existsSync(externalDashboardPath)) {
+  fail(`missing ${path.relative(projectRoot, externalDashboardPath)}`);
+} else {
+  const externalDashboard = JSON.parse(
+    fs.readFileSync(externalDashboardPath, 'utf8'),
+  );
+  const externalSql = (externalDashboard.panels ?? [])
+    .flatMap((panel) => panel.targets ?? [])
+    .map((target) => target.rawSql ?? '')
+    .join('\n');
+
+  if (externalDashboard.uid === dashboard.uid) {
+    fail('external dashboard must have a separate UID');
+  }
+  if ((externalDashboard.templating?.list ?? []).length !== 0) {
+    fail('external dashboard must not define template variables');
+  }
+  if (externalSql.includes('${price_source:sqlstring}')) {
+    fail('external dashboard SQL must not use price_source');
+  }
+  if (!externalSql.includes("'auto' = 'auto'")) {
+    fail('external dashboard must retain automatic price-source fallback');
+  }
+}
+
 if (!process.exitCode) {
   console.log(
     `Dashboard validation passed: ${requiredPanelTitles.length} required panels, ` +
-      `${requiredSqlObjects.length} SQL objects, Europe/Berlin timezone, 5s refresh.`,
+      `${requiredSqlObjects.length} SQL objects, internal and external variants.`,
   );
 }

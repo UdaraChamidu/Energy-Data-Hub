@@ -6,6 +6,11 @@ const outputPath = path.join(
   'dashboards',
   'germany-energy-monitoring.json',
 );
+const externalOutputPath = path.join(
+  __dirname,
+  'dashboards',
+  'germany-energy-monitoring-external.json',
+);
 
 const datasource = {
   type: 'grafana-postgresql-datasource',
@@ -666,3 +671,27 @@ const dashboard = {
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(dashboard, null, 2)}\n`, 'utf8');
 console.log(`Generated ${path.relative(process.cwd(), outputPath)}`);
+
+const externalDashboard = JSON.parse(JSON.stringify(dashboard));
+externalDashboard.title = 'Germany Energy Monitoring - External';
+externalDashboard.uid = 'energy-data-hub-de-external';
+externalDashboard.tags = [...externalDashboard.tags, 'external'];
+externalDashboard.templating = { list: [] };
+
+for (const panel of externalDashboard.panels) {
+  for (const target of panel.targets ?? []) {
+    if (typeof target.rawSql === 'string') {
+      target.rawSql = target.rawSql.replaceAll(
+        '${price_source:sqlstring}',
+        "'auto'",
+      );
+    }
+  }
+}
+
+fs.writeFileSync(
+  externalOutputPath,
+  `${JSON.stringify(externalDashboard, null, 2)}\n`,
+  'utf8',
+);
+console.log(`Generated ${path.relative(process.cwd(), externalOutputPath)}`);
