@@ -92,10 +92,10 @@ if (gridTimePanel?.fieldConfig?.defaults?.unit !== 'time:HH:mm:ss') {
 }
 if (
   !gridTimePanel?.targets?.some((target) =>
-    target.rawSql?.includes('* 1000'),
+    target.rawSql?.includes(')::double precision AS "Grid Time"'),
   )
 ) {
-  fail('Grid Time must return Unix epoch milliseconds');
+  fail('Grid Time must return Unix epoch milliseconds as double precision');
 }
 
 const pricePanels = panels.filter((panel) =>

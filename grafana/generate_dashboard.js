@@ -288,7 +288,7 @@ const gridTimeSql = `SELECT
         "time" + make_interval(secs => deviation_seconds::double precision)
       )
     ) * 1000
-  )::bigint AS "Grid Time"
+  )::double precision AS "Grid Time"
 FROM energy_data.v_grafana_grid_time_deviation
 WHERE country_code = 'DE'
   AND deviation_seconds IS NOT NULL
@@ -659,7 +659,7 @@ const dashboard = {
   timezone: 'Europe/Berlin',
   title: 'Germany Energy Monitoring',
   uid: 'energy-data-hub-de',
-  version: 3,
+  version: 4,
   weekStart: 'monday',
 };
 

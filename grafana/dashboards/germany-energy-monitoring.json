@@ -361,7 +361,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  round(\n    extract(\n      epoch FROM coalesce(\n        grid_time,\n        \"time\" + make_interval(secs => deviation_seconds::double precision)\n      )\n    ) * 1000\n  )::bigint AS \"Grid Time\"\nFROM energy_data.v_grafana_grid_time_deviation\nWHERE country_code = 'DE'\n  AND deviation_seconds IS NOT NULL\nORDER BY \"time\" DESC\nLIMIT 1;",
+          "rawSql": "SELECT\n  round(\n    extract(\n      epoch FROM coalesce(\n        grid_time,\n        \"time\" + make_interval(secs => deviation_seconds::double precision)\n      )\n    ) * 1000\n  )::double precision AS \"Grid Time\"\nFROM energy_data.v_grafana_grid_time_deviation\nWHERE country_code = 'DE'\n  AND deviation_seconds IS NOT NULL\nORDER BY \"time\" DESC\nLIMIT 1;",
           "refId": "A"
         }
       ],
@@ -1129,6 +1129,6 @@
   "timezone": "Europe/Berlin",
   "title": "Germany Energy Monitoring",
   "uid": "energy-data-hub-de",
-  "version": 3,
+  "version": 4,
   "weekStart": "monday"
 }
