@@ -279,6 +279,7 @@ ORDER BY "time";`;
 
 const deviationSql = `SELECT
   "time",
+  0.0::double precision AS "Target",
   deviation_seconds AS "Time Deviation"
 FROM energy_data.v_grafana_grid_time_deviation
 WHERE $__timeFilter("time")
@@ -437,6 +438,17 @@ const panels = [
     rawSql: deviationSql,
     unit: 's',
     decimals: 3,
+    overrides: [
+      {
+        matcher: { id: 'byName', options: 'Target' },
+        properties: [
+          { id: 'color', value: { fixedColor: 'green', mode: 'fixed' } },
+          { id: 'custom.lineStyle', value: { dash: [8, 6], fill: 'dash' } },
+          { id: 'custom.lineWidth', value: 1 },
+          { id: 'custom.fillOpacity', value: 0 },
+        ],
+      },
+    ],
   }),
   statPanel({
     id: 4,

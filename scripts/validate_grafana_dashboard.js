@@ -104,6 +104,30 @@ if (
   fail('Grid Time must return Unix epoch milliseconds as double precision');
 }
 
+function validateDeviationTarget(panel, label = '') {
+  const prefix = label ? `${label} ` : '';
+  const panelSql = (panel?.targets ?? [])
+    .map((target) => target.rawSql ?? '')
+    .join('\n');
+
+  if (!panelSql.includes('0.0::double precision AS "Target"')) {
+    fail(`${prefix}Grid Time Deviation must return a zero Target series`);
+  }
+
+  const targetOverride = panel?.fieldConfig?.overrides?.find(
+    (override) =>
+      override.matcher?.id === 'byName' &&
+      override.matcher?.options === 'Target',
+  );
+  if (!targetOverride) {
+    fail(`${prefix}Grid Time Deviation must style the Target series`);
+  }
+}
+
+validateDeviationTarget(
+  panels.find((panel) => panel.title === 'Grid Time Deviation'),
+);
+
 const pricePanels = panels.filter((panel) =>
   [
     'Current Delivery Price',
@@ -130,6 +154,12 @@ if (!fs.existsSync(externalDashboardPath)) {
 } else {
   const externalDashboard = JSON.parse(
     fs.readFileSync(externalDashboardPath, 'utf8'),
+  );
+  validateDeviationTarget(
+    (externalDashboard.panels ?? []).find(
+      (panel) => panel.title === 'Grid Time Deviation',
+    ),
+    'external',
   );
   const externalSql = (externalDashboard.panels ?? [])
     .flatMap((panel) => panel.targets ?? [])

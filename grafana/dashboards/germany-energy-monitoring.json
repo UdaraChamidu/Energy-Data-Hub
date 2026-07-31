@@ -261,7 +261,41 @@
           },
           "unit": "s"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Target"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    8,
+                    6
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -295,7 +329,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  \"time\",\n  deviation_seconds AS \"Time Deviation\"\nFROM energy_data.v_grafana_grid_time_deviation\nWHERE $__timeFilter(\"time\")\n  AND country_code = 'DE'\nORDER BY \"time\";",
+          "rawSql": "SELECT\n  \"time\",\n  0.0::double precision AS \"Target\",\n  deviation_seconds AS \"Time Deviation\"\nFROM energy_data.v_grafana_grid_time_deviation\nWHERE $__timeFilter(\"time\")\n  AND country_code = 'DE'\nORDER BY \"time\";",
           "refId": "A"
         }
       ],
