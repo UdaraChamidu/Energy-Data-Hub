@@ -47,6 +47,7 @@ function timeSeriesPanel({
   rawSql,
   unit,
   decimals,
+  lineInterpolation = 'linear',
   overrides = [],
 }) {
   return {
@@ -71,7 +72,7 @@ function timeSeriesPanel({
             viz: false,
           },
           insertNulls: false,
-          lineInterpolation: 'linear',
+          lineInterpolation,
           lineWidth: 2,
           pointSize: 4,
           scaleDistribution: { type: 'linear' },
@@ -434,7 +435,7 @@ const panels = [
     title: 'Grid Time Deviation',
     description:
       'Calculated cumulative grid-time deviation from stored frequency samples. This is an approximation, not an official grid-time API feed.',
-    gridPos: { h: 8, w: 18, x: 0, y: 9 },
+    gridPos: { h: 8, w: 24, x: 0, y: 9 },
     rawSql: deviationSql,
     unit: 's',
     decimals: 3,
@@ -455,7 +456,7 @@ const panels = [
     title: 'Grid Time',
     description:
       'Latest calculated grid time displayed in Europe/Berlin local time.',
-    gridPos: { h: 8, w: 6, x: 18, y: 9 },
+    gridPos: { h: 6, w: 12, x: 12, y: 34 },
     rawSql: gridTimeSql,
     unit: 'time:HH:mm:ss',
     textMode: 'value',
@@ -466,7 +467,7 @@ const panels = [
     title: 'Current Delivery Price',
     description:
       'Price for the delivery interval active now. Auto prefers ENTSO-E and falls back to SMARD. This is day-ahead interval data, not a continuous intraday trade.',
-    gridPos: { h: 8, w: 6, x: 0, y: 18 },
+    gridPos: { h: 6, w: 12, x: 0, y: 34 },
     rawSql: currentPriceSql,
     unit: 'suffix: EUR/MWh',
     decimals: 2,
@@ -477,10 +478,11 @@ const panels = [
     title: '15-Minute Price - High / Low / Last',
     description:
       'Derived 15-minute values from the selected official price source. With one clearing price per interval, High, Low and Last can be equal.',
-    gridPos: { h: 8, w: 18, x: 6, y: 18 },
+    gridPos: { h: 8, w: 24, x: 0, y: 18 },
     rawSql: priceChartSql('15m'),
     unit: 'suffix: EUR/MWh',
     decimals: 2,
+    lineInterpolation: 'stepAfter',
   }),
   timeSeriesPanel({
     id: 8,
@@ -491,14 +493,15 @@ const panels = [
     rawSql: priceChartSql('60m'),
     unit: 'suffix: EUR/MWh',
     decimals: 2,
+    lineInterpolation: 'stepAfter',
   }),
-  rowPanel(9, 'Daily Price Records', 34),
+  rowPanel(9, 'Daily Price Records', 40),
   statPanel({
     id: 10,
     title: '15-Minute Low Today',
     description:
       'Lowest 15-minute price in the current Europe/Berlin calendar day.',
-    gridPos: { h: 5, w: 6, x: 0, y: 35 },
+    gridPos: { h: 5, w: 6, x: 0, y: 41 },
     rawSql: priceStatSql(
       '15m',
       'low_price_eur_mwh',
@@ -512,7 +515,7 @@ const panels = [
     title: '15-Minute High Today',
     description:
       'Highest 15-minute price in the current Europe/Berlin calendar day.',
-    gridPos: { h: 5, w: 6, x: 6, y: 35 },
+    gridPos: { h: 5, w: 6, x: 6, y: 41 },
     rawSql: priceStatSql(
       '15m',
       'high_price_eur_mwh',
@@ -526,7 +529,7 @@ const panels = [
     title: '60-Minute Low Today',
     description:
       'Lowest hourly aggregate price in the current Europe/Berlin calendar day.',
-    gridPos: { h: 5, w: 6, x: 12, y: 35 },
+    gridPos: { h: 5, w: 6, x: 12, y: 41 },
     rawSql: priceStatSql(
       '60m',
       'low_price_eur_mwh',
@@ -540,7 +543,7 @@ const panels = [
     title: '60-Minute High Today',
     description:
       'Highest hourly aggregate price in the current Europe/Berlin calendar day.',
-    gridPos: { h: 5, w: 6, x: 18, y: 35 },
+    gridPos: { h: 5, w: 6, x: 18, y: 41 },
     rawSql: priceStatSql(
       '60m',
       'high_price_eur_mwh',
@@ -549,8 +552,8 @@ const panels = [
     unit: 'suffix: EUR/MWh',
     decimals: 2,
   }),
-  rowPanel(14, 'System Operations', 40),
-  healthTablePanel(15, 41),
+  rowPanel(14, 'System Operations', 46),
+  healthTablePanel(15, 47),
 ];
 
 const dashboard = {

@@ -13,7 +13,7 @@ For the Germany-first version, use this API strategy:
 | Germany wholesale-price fallback/cross-check | SMARD public JSON series | Client-named Bundesnetzagentur platform; no token; filter `4169`, region `DE-LU`. |
 | Germany 15-minute prices | ENTSO-E first, if the returned German day-ahead series uses 15-minute resolution; otherwise use EPEX/EEX licensed market data | EPEX public pages show 15-minute market result structure, but reliable programmatic access for full market data points to market-data products/licensing. |
 | Germany 60-minute prices | ENTSO-E day-ahead hourly/aggregated data or derived from 15-minute data | Fits current database design. |
-| True continuous intraday High/Low/Last | EPEX SPOT / EEX market data service, if credentials/license are available | ENTSO-E is not a real-time continuous intraday trade feed. EPEX/EEX is the proper market source for this. |
+| True continuous intraday High/Low/Last | EPEX SPOT Germany continuous market data | Start with delayed SFTP product `DE RES CONT DEL SFTP` if EPEX confirms it contains the required result fields; otherwise use `DE TRA + RES CONT DEL SFTP`. Use real-time product `DE CONT API RO RT` only when a 20-minute delay is unacceptable. |
 | Fallback simple price feed | aWATTar marketdata API | Easy JSON endpoint for EPEX spot next-day prices, no token on the documented Austrian API, but it is not true continuous intraday OHLC. |
 
 ## Recommended First Build
@@ -95,6 +95,11 @@ Best practical interpretation for first build:
 - Add EPEX/EEX licensed market-data feed later if the client confirms they need true continuous intraday trade OHLC.
 
 This avoids blocking the project while still building the correct PostgreSQL/n8n foundation.
+
+The client has now explicitly confirmed that EPEX SPOT intraday data are
+required. See [epex_spot_intraday_access.md](epex_spot_intraday_access.md) for
+the official products, published starting prices, licensing questions and
+recommended low-cost implementation.
 
 ## Sources Checked
 

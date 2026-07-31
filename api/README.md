@@ -19,4 +19,5 @@ Read first:
 - [germany_endpoint_reference.md](germany_endpoint_reference.md)
 - [api_limitations_and_decisions.md](api_limitations_and_decisions.md)
 - [entsoe_token_setup.md](entsoe_token_setup.md)
+- [epex_spot_intraday_access.md](epex_spot_intraday_access.md)
 - [../docs/client_requirements_traceability.md](../docs/client_requirements_traceability.md)

@@ -81,6 +81,30 @@ if (dashboard.refresh !== '5s') {
   fail('dashboard refresh must be 5s');
 }
 
+if (dashboard.graphTooltip !== 1) {
+  fail('dashboard must use shared crosshair');
+}
+
+const alignedTimeSeriesTitles = [
+  'Grid Frequency - Target vs Actual',
+  'Grid Time Deviation',
+  '15-Minute Price - High / Low / Last',
+  '60-Minute Price - High / Low / Last',
+];
+const alignedTimeSeries = alignedTimeSeriesTitles.map((title) =>
+  panels.find((panel) => panel.title === title),
+);
+for (const panel of alignedTimeSeries) {
+  if (panel?.gridPos?.x !== 0 || panel?.gridPos?.w !== 24) {
+    fail(`${panel?.title ?? 'aligned time-series panel'} must be full width`);
+  }
+}
+for (let index = 1; index < alignedTimeSeries.length; index += 1) {
+  if (alignedTimeSeries[index]?.gridPos?.y <= alignedTimeSeries[index - 1]?.gridPos?.y) {
+    fail('aligned time-series panels must be stacked in chronological panel order');
+  }
+}
+
 const priceSource = dashboard.templating?.list?.find(
   (variable) => variable.name === 'price_source',
 );
@@ -128,6 +152,13 @@ validateDeviationTarget(
   panels.find((panel) => panel.title === 'Grid Time Deviation'),
 );
 
+for (const title of alignedTimeSeriesTitles.slice(2)) {
+  const panel = panels.find((candidate) => candidate.title === title);
+  if (panel?.fieldConfig?.defaults?.custom?.lineInterpolation !== 'stepAfter') {
+    fail(`${title} must use step-after interpolation`);
+  }
+}
+
 const pricePanels = panels.filter((panel) =>
   [
     'Current Delivery Price',
@@ -155,6 +186,17 @@ if (!fs.existsSync(externalDashboardPath)) {
   const externalDashboard = JSON.parse(
     fs.readFileSync(externalDashboardPath, 'utf8'),
   );
+  if (externalDashboard.graphTooltip !== 1) {
+    fail('external dashboard must use shared crosshair');
+  }
+  for (const title of alignedTimeSeriesTitles) {
+    const panel = (externalDashboard.panels ?? []).find(
+      (candidate) => candidate.title === title,
+    );
+    if (panel?.gridPos?.x !== 0 || panel?.gridPos?.w !== 24) {
+      fail(`external ${title} must be full width`);
+    }
+  }
   validateDeviationTarget(
     (externalDashboard.panels ?? []).find(
       (panel) => panel.title === 'Grid Time Deviation',
