@@ -128,16 +128,82 @@ requires explicit EPEX approval.
 
 ## Free Alternatives Rechecked
 
-Fraunhofer Energy-Charts publicly displays German continuous intraday average,
-Low, High, ID1 and ID3 series. However, its documented API version 1.6 exposes
-only a `/price` endpoint for Day-Ahead Price; it does not document an endpoint
-for continuous intraday Low, High or Last. The public API also directs
-commercial customers to request API-key access.
+Fraunhofer Energy-Charts publicly displays German continuous intraday Average,
+Low, High, ID1 and ID3 series. Its documented API version 1.6 exposes only a
+`/price` endpoint for Day-Ahead Price; it does not document an endpoint for
+continuous intraday results. The public API also directs commercial customers
+to request API-key access.
 
-Therefore Energy-Charts is useful for manual comparison, but it is not a
-confirmed replacement for the licensed EPEX feed required by this production
-dashboard. An undocumented website endpoint must not be treated as a stable or
-licensed API.
+The chart itself loads public weekly JSON files. These were live-tested on
+2026-07-31 and contained the following DE-LU series for both 15-minute and
+60-minute products:
+
+```text
+Average Price
+Low Price
+High Price
+ID1 Price
+ID3 Price
+```
+
+Current-week examples:
+
+```text
+https://energy-charts.info/charts/price_spot_market/data/de/week_15min_2026_31.json
+https://energy-charts.info/charts/price_spot_market/data/de/week_2026_31.json
+```
+
+The year and ISO week must be calculated dynamically. The first JSON series
+contains `xAxisValues` as Unix milliseconds; all series data arrays use those
+same positions.
+
+This route is technically suitable for a low-request provisional collector:
+fetch the two files once every 30 minutes (96 HTTP requests/day total), parse
+only the five named intraday series, and upsert published values.
+
+Important limitations:
+
+- The files do not contain `Last`, so Average must not be labelled as Last.
+- The files are website implementation data, not a documented API contract,
+  and their path or schema can change without API deprecation guarantees.
+- Commercial/external-dashboard use should be confirmed in writing with
+  Fraunhofer Energy-Charts and, if required, EPEX SPOT.
+- Direct scraping of EPEX market-results pages is not recommended because EPEX
+  explicitly requires approval for commercial use.
+
+SMARD was also rechecked. Its selected public price series contains
+day-ahead/wholesale delivery prices, not continuous intraday Average, Low,
+High, ID1, ID3 or Last.
+
+## Direct EPEX Website Scraper Feasibility
+
+The client later requested direct scraping of:
+
+```text
+https://www.epexspot.com/en/market-data
+```
+
+That URL redirects to `/en/market-results`. Live tests on 2026-07-31 found:
+
+- Automated HTTP requests receive HTTP `202` with
+  `x-amzn-waf-action: challenge` and an empty response body.
+- Headless Chrome receives `403 Forbidden`.
+- The results application requires a data-use disclaimer session and a Drupal
+  AJAX form submission before table data are returned.
+
+Consequently, a normal n8n HTTP Request workflow cannot scrape this page. A
+headless-browser workflow is also not currently viable from the tested host.
+Trying to bypass the WAF or repeatedly replay short-lived browser cookies would
+be unreliable for a production collector.
+
+Before attempting direct EPEX scraping, obtain Peter's previous scraper source,
+runtime details and persisted browser/session configuration. This will show
+whether the old system used a licensed endpoint, a manually maintained browser
+session, or an infrastructure path that EPEX allows.
+
+The technically available no-key fallback remains the Energy-Charts weekly
+JSON collector described above. It is accessible to n8n but has no `Last`
+field and still needs usage-rights confirmation.
 
 ## Official References
 
