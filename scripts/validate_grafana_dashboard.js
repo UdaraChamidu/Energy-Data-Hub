@@ -14,6 +14,18 @@ const externalDashboardPath = path.join(
   'dashboards',
   'germany-energy-monitoring-external.json',
 );
+const compactDashboardPath = path.join(
+  projectRoot,
+  'grafana',
+  'dashboards',
+  'germany-energy-monitoring-compact.json',
+);
+const compactExternalDashboardPath = path.join(
+  projectRoot,
+  'grafana',
+  'dashboards',
+  'germany-energy-monitoring-compact-external.json',
+);
 
 const requiredPanelTitles = [
   'Grid Frequency - Target vs Actual',
@@ -152,11 +164,38 @@ validateDeviationTarget(
   panels.find((panel) => panel.title === 'Grid Time Deviation'),
 );
 
-for (const title of alignedTimeSeriesTitles.slice(2)) {
-  const panel = panels.find((candidate) => candidate.title === title);
+const expectedPriceColors = {
+  High: '#F2CC0C',
+  Low: '#E02F44',
+  Last: '#3274D9',
+};
+
+function validatePriceChartStyle(panel, label = '') {
+  const prefix = label ? `${label} ` : '';
+  const title = panel?.title ?? 'price chart';
   if (panel?.fieldConfig?.defaults?.custom?.lineInterpolation !== 'stepAfter') {
-    fail(`${title} must use step-after interpolation`);
+    fail(`${prefix}${title} must use step-after interpolation`);
   }
+  if (panel?.fieldConfig?.defaults?.custom?.fillOpacity !== 0) {
+    fail(`${prefix}${title} must not fill below its lines`);
+  }
+  for (const [series, color] of Object.entries(expectedPriceColors)) {
+    const override = panel?.fieldConfig?.overrides?.find(
+      (candidate) => candidate.matcher?.options === series,
+    );
+    const colorProperty = override?.properties?.find(
+      (property) => property.id === 'color',
+    );
+    if (colorProperty?.value?.fixedColor !== color) {
+      fail(`${prefix}${title} must color ${series} as ${color}`);
+    }
+  }
+}
+
+for (const title of alignedTimeSeriesTitles.slice(2)) {
+  validatePriceChartStyle(
+    panels.find((candidate) => candidate.title === title),
+  );
 }
 
 const pricePanels = panels.filter((panel) =>
@@ -197,6 +236,14 @@ if (!fs.existsSync(externalDashboardPath)) {
       fail(`external ${title} must be full width`);
     }
   }
+  for (const title of alignedTimeSeriesTitles.slice(2)) {
+    validatePriceChartStyle(
+      (externalDashboard.panels ?? []).find(
+        (candidate) => candidate.title === title,
+      ),
+      'external',
+    );
+  }
   validateDeviationTarget(
     (externalDashboard.panels ?? []).find(
       (panel) => panel.title === 'Grid Time Deviation',
@@ -222,9 +269,102 @@ if (!fs.existsSync(externalDashboardPath)) {
   }
 }
 
+function validateCompactDashboard(
+  candidatePath,
+  { external = false, otherUids = [] } = {},
+) {
+  const label = external ? 'compact external' : 'compact';
+  if (!fs.existsSync(candidatePath)) {
+    fail(`missing ${path.relative(projectRoot, candidatePath)}`);
+    return;
+  }
+
+  const candidate = JSON.parse(fs.readFileSync(candidatePath, 'utf8'));
+  const candidatePanels = candidate.panels ?? [];
+  const candidateIds = candidatePanels.map((panel) => panel.id);
+  const candidateSql = candidatePanels
+    .flatMap((panel) => panel.targets ?? [])
+    .map((target) => target.rawSql ?? '')
+    .join('\n');
+
+  if (otherUids.includes(candidate.uid)) {
+    fail(`${label} dashboard must have a separate UID`);
+  }
+  if (new Set(candidateIds).size !== candidateIds.length) {
+    fail(`${label} dashboard panel IDs are not unique`);
+  }
+  if (candidate.graphTooltip !== 1) {
+    fail(`${label} dashboard must use shared crosshair`);
+  }
+  if (candidate.refresh !== '5s') {
+    fail(`${label} dashboard refresh must be 5s`);
+  }
+
+  const rightTitles = [
+    'Grid Time',
+    'Grid Frequency (Live)',
+    'Grid Time Deviation (Live)',
+    '15-Minute Price (Live)',
+    '60-Minute Price (Live)',
+  ];
+  for (const title of rightTitles) {
+    const panel = candidatePanels.find((item) => item.title === title);
+    if (panel?.gridPos?.x !== 18 || panel?.gridPos?.w !== 6) {
+      fail(`${label} ${title} must be in the right-side column`);
+    }
+  }
+
+  const currentPrice = candidatePanels.find(
+    (panel) => panel.title === 'Current Delivery Price',
+  );
+  if (currentPrice?.gridPos?.x !== 0 || currentPrice?.gridPos?.w !== 18) {
+    fail(`${label} Current Delivery Price must be prominent on the left`);
+  }
+
+  for (const title of alignedTimeSeriesTitles) {
+    const panel = candidatePanels.find((item) => item.title === title);
+    if (panel?.gridPos?.x !== 0 || panel?.gridPos?.w !== 24) {
+      fail(`${label} ${title} must be full width`);
+    }
+  }
+  for (const title of alignedTimeSeriesTitles.slice(2)) {
+    validatePriceChartStyle(
+      candidatePanels.find((panel) => panel.title === title),
+      label,
+    );
+  }
+
+  if (external) {
+    if ((candidate.templating?.list ?? []).length !== 0) {
+      fail(`${label} dashboard must not define template variables`);
+    }
+    if (candidateSql.includes('${price_source:sqlstring}')) {
+      fail(`${label} dashboard SQL must not use price_source`);
+    }
+  } else if (
+    !candidate.templating?.list?.some(
+      (variable) => variable.name === 'price_source',
+    )
+  ) {
+    fail(`${label} dashboard must define price_source`);
+  }
+}
+
+validateCompactDashboard(compactDashboardPath, {
+  otherUids: [dashboard.uid],
+});
+
+const compactDashboard = fs.existsSync(compactDashboardPath)
+  ? JSON.parse(fs.readFileSync(compactDashboardPath, 'utf8'))
+  : {};
+validateCompactDashboard(compactExternalDashboardPath, {
+  external: true,
+  otherUids: [dashboard.uid, compactDashboard.uid],
+});
+
 if (!process.exitCode) {
   console.log(
     `Dashboard validation passed: ${requiredPanelTitles.length} required panels, ` +
-      `${requiredSqlObjects.length} SQL objects, internal and external variants.`,
+      `${requiredSqlObjects.length} SQL objects, standard and compact variants.`,
   );
 }

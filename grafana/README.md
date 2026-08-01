@@ -33,6 +33,19 @@ This folder contains the Germany-first Grafana dashboard requested in the client
    - `Auto` prefers ENTSO-E and falls back to SMARD when ENTSO-E has no matching data.
    - `ENTSO-E` and `SMARD` force one source for troubleshooting or comparison.
 
+## Compact Dashboard
+
+Use `grafana/dashboards/germany-energy-monitoring-compact.json` for the compact
+client layout. It keeps the current delivery price prominent on the left, stacks
+five current-value panels on the right, and retains the aligned historical charts
+below them. It has the separate UID `energy-data-hub-de-compact`, so importing it
+does not replace the original dashboard.
+
+For public sharing, import
+`grafana/dashboards/germany-energy-monitoring-compact-external.json` instead. It
+uses automatic price-source selection without a template variable, which Grafana
+public dashboards do not support.
+
 ## External Sharing
 
 Grafana externally shared dashboards do not support template variables or panel

@@ -11,6 +11,16 @@ const externalOutputPath = path.join(
   'dashboards',
   'germany-energy-monitoring-external.json',
 );
+const compactOutputPath = path.join(
+  __dirname,
+  'dashboards',
+  'germany-energy-monitoring-compact.json',
+);
+const compactExternalOutputPath = path.join(
+  __dirname,
+  'dashboards',
+  'germany-energy-monitoring-compact-external.json',
+);
 
 const datasource = {
   type: 'grafana-postgresql-datasource',
@@ -48,6 +58,7 @@ function timeSeriesPanel({
   unit,
   decimals,
   lineInterpolation = 'linear',
+  fillOpacity = 8,
   overrides = [],
 }) {
   return {
@@ -64,7 +75,7 @@ function timeSeriesPanel({
           axisPlacement: 'auto',
           barAlignment: 0,
           drawStyle: 'line',
-          fillOpacity: 8,
+          fillOpacity,
           gradientMode: 'none',
           hideFrom: {
             legend: false,
@@ -125,6 +136,11 @@ function statPanel({
   colorMode = 'value',
   textMode = 'auto',
   showAllValues = false,
+  orientation = 'auto',
+  justifyMode = 'center',
+  wideLayout = true,
+  text,
+  overrides = [],
 }) {
   return {
     datasource,
@@ -141,15 +157,15 @@ function statPanel({
         },
         unit,
       },
-      overrides: [],
+      overrides,
     },
     gridPos,
     id,
     options: {
       colorMode,
       graphMode: 'none',
-      justifyMode: 'center',
-      orientation: 'auto',
+      justifyMode,
+      orientation,
       reduceOptions: {
         calcs: ['lastNotNull'],
         fields: '',
@@ -157,8 +173,9 @@ function statPanel({
         values: showAllValues,
       },
       showPercentChange: false,
+      ...(text ? { text } : {}),
       textMode,
-      wideLayout: true,
+      wideLayout,
     },
     targets: [postgresTarget(rawSql, 'table')],
     title,
@@ -302,6 +319,22 @@ WHERE country_code = 'DE'
 ORDER BY "time" DESC
 LIMIT 1;`;
 
+const latestFrequencySql = `SELECT
+  actual_hz AS "Frequency"
+FROM energy_data.v_grafana_grid_frequency
+WHERE country_code = 'DE'
+  AND actual_hz IS NOT NULL
+ORDER BY "time" DESC
+LIMIT 1;`;
+
+const latestDeviationSql = `SELECT
+  deviation_seconds AS "Deviation"
+FROM energy_data.v_grafana_grid_time_deviation
+WHERE country_code = 'DE'
+  AND deviation_seconds IS NOT NULL
+ORDER BY "time" DESC
+LIMIT 1;`;
+
 const priceSourceVariable = '${price_source:sqlstring}';
 const priceSourcePriority =
   "CASE s.code WHEN 'entsoe' THEN 1 WHEN 'smard' THEN 2 ELSE 99 END";
@@ -379,6 +412,65 @@ WHERE $__timeFilter(p.interval_start)
   AND m.country_code = 'DE'
 ORDER BY p.interval_start;`;
 }
+
+function latestPriceStatSql(intervalType) {
+  return `WITH chosen_source AS (
+  SELECT s.id
+  FROM energy_data.data_sources s
+  WHERE s.code IN ('entsoe', 'smard')
+    AND (
+      ${priceSourceVariable} = 'auto'
+      OR s.code = ${priceSourceVariable}
+    )
+    AND EXISTS (
+      SELECT 1
+      FROM energy_data.market_price_ohlc candidate
+      JOIN energy_data.markets candidate_market
+        ON candidate_market.id = candidate.market_id
+      WHERE candidate.source_id = s.id
+        AND candidate.interval_type = '${intervalType}'
+        AND now() >= candidate.interval_start
+        AND now() < candidate.interval_end
+        AND candidate_market.country_code = 'DE'
+    )
+  ORDER BY ${priceSourcePriority}
+  LIMIT 1
+)
+SELECT
+  p.high_price_eur_mwh AS "High",
+  p.low_price_eur_mwh AS "Low",
+  p.last_price_eur_mwh AS "Last"
+FROM energy_data.market_price_ohlc p
+JOIN chosen_source selected ON selected.id = p.source_id
+JOIN energy_data.markets m ON m.id = p.market_id
+WHERE p.interval_type = '${intervalType}'
+  AND now() >= p.interval_start
+  AND now() < p.interval_end
+  AND m.country_code = 'DE'
+ORDER BY p.interval_start DESC, p.calculated_at DESC
+LIMIT 1;`;
+}
+
+const priceColorOverrides = [
+  {
+    matcher: { id: 'byName', options: 'High' },
+    properties: [
+      { id: 'color', value: { fixedColor: '#F2CC0C', mode: 'fixed' } },
+    ],
+  },
+  {
+    matcher: { id: 'byName', options: 'Low' },
+    properties: [
+      { id: 'color', value: { fixedColor: '#E02F44', mode: 'fixed' } },
+    ],
+  },
+  {
+    matcher: { id: 'byName', options: 'Last' },
+    properties: [
+      { id: 'color', value: { fixedColor: '#3274D9', mode: 'fixed' } },
+    ],
+  },
+];
 
 function priceStatSql(intervalType, valueColumn, alias) {
   return `WITH chosen_source AS (
@@ -483,6 +575,8 @@ const panels = [
     unit: 'suffix: EUR/MWh',
     decimals: 2,
     lineInterpolation: 'stepAfter',
+    fillOpacity: 0,
+    overrides: priceColorOverrides,
   }),
   timeSeriesPanel({
     id: 8,
@@ -494,6 +588,8 @@ const panels = [
     unit: 'suffix: EUR/MWh',
     decimals: 2,
     lineInterpolation: 'stepAfter',
+    fillOpacity: 0,
+    overrides: priceColorOverrides,
   }),
   rowPanel(9, 'Daily Price Records', 40),
   statPanel({
@@ -554,6 +650,192 @@ const panels = [
   }),
   rowPanel(14, 'System Operations', 46),
   healthTablePanel(15, 47),
+];
+
+const compactPanels = [
+  rowPanel(101, 'Live Overview', 0),
+  statPanel({
+    id: 106,
+    title: 'Current Delivery Price',
+    description:
+      'Price for the delivery interval active now. Auto prefers ENTSO-E and falls back to SMARD.',
+    gridPos: { h: 17, w: 18, x: 0, y: 1 },
+    rawSql: currentPriceSql,
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+    colorMode: 'background',
+    textMode: 'value',
+    text: { valueSize: 56 },
+  }),
+  statPanel({
+    id: 104,
+    title: 'Grid Time',
+    description:
+      'Latest calculated grid time displayed in Europe/Berlin local time.',
+    gridPos: { h: 3, w: 6, x: 18, y: 1 },
+    rawSql: gridTimeSql,
+    unit: 'time:HH:mm:ss',
+    textMode: 'value',
+    text: { valueSize: 24 },
+  }),
+  statPanel({
+    id: 102,
+    title: 'Grid Frequency (Live)',
+    description: 'Latest measured grid-frequency value.',
+    gridPos: { h: 3, w: 6, x: 18, y: 4 },
+    rawSql: latestFrequencySql,
+    unit: 'hertz',
+    decimals: 3,
+    textMode: 'value_and_name',
+    text: { titleSize: 11, valueSize: 22 },
+  }),
+  statPanel({
+    id: 103,
+    title: 'Grid Time Deviation (Live)',
+    description: 'Latest calculated deviation from the grid-time baseline of zero.',
+    gridPos: { h: 3, w: 6, x: 18, y: 7 },
+    rawSql: latestDeviationSql,
+    unit: 's',
+    decimals: 3,
+    textMode: 'value_and_name',
+    text: { titleSize: 11, valueSize: 22 },
+  }),
+  statPanel({
+    id: 107,
+    title: '15-Minute Price (Live)',
+    description:
+      'High, Low and Last for the 15-minute delivery interval active now.',
+    gridPos: { h: 4, w: 6, x: 18, y: 10 },
+    rawSql: latestPriceStatSql('15m'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+    textMode: 'value_and_name',
+    orientation: 'horizontal',
+    wideLayout: false,
+    text: { titleSize: 10, valueSize: 18 },
+    overrides: priceColorOverrides,
+  }),
+  statPanel({
+    id: 108,
+    title: '60-Minute Price (Live)',
+    description:
+      'High, Low and Last for the 60-minute delivery interval active now.',
+    gridPos: { h: 4, w: 6, x: 18, y: 14 },
+    rawSql: latestPriceStatSql('60m'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+    textMode: 'value_and_name',
+    orientation: 'horizontal',
+    wideLayout: false,
+    text: { titleSize: 10, valueSize: 18 },
+    overrides: priceColorOverrides,
+  }),
+  rowPanel(109, 'Historical Trends', 18),
+  timeSeriesPanel({
+    id: 110,
+    title: 'Grid Frequency - Target vs Actual',
+    description:
+      'Continental Europe target frequency and measured live frequency for Germany.',
+    gridPos: { h: 7, w: 24, x: 0, y: 19 },
+    rawSql: frequencySql,
+    unit: 'hertz',
+    decimals: 3,
+    overrides: [
+      {
+        matcher: { id: 'byName', options: 'Target Frequency' },
+        properties: [
+          { id: 'color', value: { fixedColor: 'green', mode: 'fixed' } },
+          { id: 'custom.lineStyle', value: { dash: [8, 6], fill: 'dash' } },
+          { id: 'custom.lineWidth', value: 1 },
+        ],
+      },
+    ],
+  }),
+  timeSeriesPanel({
+    id: 111,
+    title: 'Grid Time Deviation',
+    description:
+      'Calculated cumulative grid-time deviation with a static zero target line.',
+    gridPos: { h: 7, w: 24, x: 0, y: 26 },
+    rawSql: deviationSql,
+    unit: 's',
+    decimals: 3,
+    overrides: [
+      {
+        matcher: { id: 'byName', options: 'Target' },
+        properties: [
+          { id: 'color', value: { fixedColor: 'green', mode: 'fixed' } },
+          { id: 'custom.lineStyle', value: { dash: [8, 6], fill: 'dash' } },
+          { id: 'custom.lineWidth', value: 1 },
+          { id: 'custom.fillOpacity', value: 0 },
+        ],
+      },
+    ],
+  }),
+  timeSeriesPanel({
+    id: 112,
+    title: '15-Minute Price - High / Low / Last',
+    description:
+      'Step lines for 15-minute High, Low and Last values. Equal values overlap.',
+    gridPos: { h: 7, w: 24, x: 0, y: 33 },
+    rawSql: priceChartSql('15m'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+    lineInterpolation: 'stepAfter',
+    fillOpacity: 0,
+    overrides: priceColorOverrides,
+  }),
+  timeSeriesPanel({
+    id: 113,
+    title: '60-Minute Price - High / Low / Last',
+    description: 'Step lines for hourly High, Low and Last values.',
+    gridPos: { h: 7, w: 24, x: 0, y: 40 },
+    rawSql: priceChartSql('60m'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+    lineInterpolation: 'stepAfter',
+    fillOpacity: 0,
+    overrides: priceColorOverrides,
+  }),
+  rowPanel(114, 'Daily Price Records', 47),
+  statPanel({
+    id: 115,
+    title: '15-Minute Low Today',
+    description: 'Lowest 15-minute price today in Europe/Berlin.',
+    gridPos: { h: 5, w: 6, x: 0, y: 48 },
+    rawSql: priceStatSql('15m', 'low_price_eur_mwh', '15-Minute Low'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+  }),
+  statPanel({
+    id: 116,
+    title: '15-Minute High Today',
+    description: 'Highest 15-minute price today in Europe/Berlin.',
+    gridPos: { h: 5, w: 6, x: 6, y: 48 },
+    rawSql: priceStatSql('15m', 'high_price_eur_mwh', '15-Minute High'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+  }),
+  statPanel({
+    id: 117,
+    title: '60-Minute Low Today',
+    description: 'Lowest hourly aggregate price today in Europe/Berlin.',
+    gridPos: { h: 5, w: 6, x: 12, y: 48 },
+    rawSql: priceStatSql('60m', 'low_price_eur_mwh', '60-Minute Low'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+  }),
+  statPanel({
+    id: 118,
+    title: '60-Minute High Today',
+    description: 'Highest hourly aggregate price today in Europe/Berlin.',
+    gridPos: { h: 5, w: 6, x: 18, y: 48 },
+    rawSql: priceStatSql('60m', 'high_price_eur_mwh', '60-Minute High'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+  }),
+  rowPanel(119, 'System Operations', 53),
+  healthTablePanel(120, 54),
 ];
 
 const dashboard = {
@@ -710,3 +992,45 @@ fs.writeFileSync(
   'utf8',
 );
 console.log(`Generated ${path.relative(process.cwd(), externalOutputPath)}`);
+
+const compactDashboard = JSON.parse(JSON.stringify(dashboard));
+compactDashboard.title = 'Germany Energy Monitoring - Compact';
+compactDashboard.uid = 'energy-data-hub-de-compact';
+compactDashboard.version = 1;
+compactDashboard.panels = compactPanels;
+compactDashboard.description =
+  'Compact Germany energy dashboard with a prominent current delivery price, a right-side live summary column, aligned historical charts, daily records and ingestion health.';
+compactDashboard.tags = [...compactDashboard.tags, 'compact'];
+
+fs.writeFileSync(
+  compactOutputPath,
+  `${JSON.stringify(compactDashboard, null, 2)}\n`,
+  'utf8',
+);
+console.log(`Generated ${path.relative(process.cwd(), compactOutputPath)}`);
+
+const compactExternalDashboard = JSON.parse(JSON.stringify(compactDashboard));
+compactExternalDashboard.title = 'Germany Energy Monitoring - Compact External';
+compactExternalDashboard.uid = 'energy-data-hub-de-compact-external';
+compactExternalDashboard.tags = [...compactExternalDashboard.tags, 'external'];
+compactExternalDashboard.templating = { list: [] };
+
+for (const panel of compactExternalDashboard.panels) {
+  for (const target of panel.targets ?? []) {
+    if (typeof target.rawSql === 'string') {
+      target.rawSql = target.rawSql.replaceAll(
+        '${price_source:sqlstring}',
+        "'auto'",
+      );
+    }
+  }
+}
+
+fs.writeFileSync(
+  compactExternalOutputPath,
+  `${JSON.stringify(compactExternalDashboard, null, 2)}\n`,
+  'utf8',
+);
+console.log(
+  `Generated ${path.relative(process.cwd(), compactExternalOutputPath)}`,
+);
