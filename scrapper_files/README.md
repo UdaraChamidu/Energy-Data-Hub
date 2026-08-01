@@ -16,26 +16,46 @@ n8n frequency workflow can continue independently, while a new EPEX collector
 can upsert price records directly into PostgreSQL using their delivery interval
 timestamps.
 
-## Missing requirements
+## Received database structure
 
-The two supplied PHP files are not a complete runnable scraper. Ask Peter for:
+Peter supplied `scraper.sql` on 2026-08-01. It is a schema-only MySQL/MariaDB
+export: it contains `CREATE TABLE` statements but no table rows. It confirms the
+old storage model for:
 
-1. `proxyConnector.class.php` and details of the proxy/Tor service it expects.
-2. `Connections/dbconnect.php` with credentials removed or supplied securely.
-3. `simple_html_dom.php` and its version/source.
-4. An export of the `params` rows for `INTRA`, `CONT15`, and `CONT1H`. These rows
-   contain the actual request URLs and URL fragments; they are not in the PHP.
-5. The schemas and sample rows for `netzdaten_chronik`, `tempintra15`,
-   `tempcont15`, `tempcont1h`, `timeidx15`, and `timeidx1h`.
-6. The old cron schedules, PHP version, server timezone, and a successful sample
-   response for each of the three EPEX requests.
-7. Confirmation that the scraper still works against the current EPEX website
-   and that its use is authorized for the company's intended purpose.
+- intraday buy volume, sell volume, volume and price;
+- 15-minute Low, High and Last;
+- 60-minute Low, High and Last;
+- 96 quarter-hour and 24 hourly time-index rows; and
+- the combined frequency/price history table `netzdaten_chronik`.
+
+The time-index rows do not need to be requested because the new collector can
+calculate interval boundaries directly. The old PHP libraries and MySQL
+connection file also do not need to be reused if the collector is rewritten for
+n8n and PostgreSQL.
+
+## One remaining input required before implementation
+
+The schema-only export does not contain the values from `scraper.params`.
+`epex-cron.php` reads its three EPEX request URLs and URL fragments from that
+table, so the current requests cannot be reconstructed or tested yet.
+
+Ask Peter for only these three rows, as data or a screenshot:
+
+```sql
+select se, url, var1, var2
+from scraper.params
+where se in ('INTRA', 'CONT15', 'CONT1H');
+```
+
+After receiving them, test each assembled URL against the current EPEX service.
+If the old URLs still work, implement a fresh parser and PostgreSQL upserts. If
+they no longer work, the schema and historical export remain useful, but they do
+not solve current EPEX website access.
 
 ## Important findings
 
-- The EPEX URLs are stored in the old MySQL `params` table, so the destination
-  and exact response format cannot be verified from these files alone.
+- The EPEX URLs are stored as data in the old MySQL `params` table. The supplied
+  schema export defines that table but does not include its rows.
 - The EPEX job expects a SOCKS5 proxy on `127.0.0.1:9050` and additional proxy
   helper code.
 - Its HTML selectors are tied to an older page structure and may no longer match

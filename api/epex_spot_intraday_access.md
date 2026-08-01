@@ -205,6 +205,22 @@ The technically available no-key fallback remains the Energy-Charts weekly
 JSON collector described above. It is accessible to n8n but has no `Last`
 field and still needs usage-rights confirmation.
 
+### Peter's legacy files received
+
+The supplied `epex-cron.php` confirms that the old collector requested three
+configurations named `INTRA`, `CONT15`, and `CONT1H`. It parsed:
+
+- buy volume, sell volume, volume and price;
+- 15-minute Low, High and Last; and
+- 60-minute Low, High and Last.
+
+The schema-only `scraper.sql` received on 2026-08-01 confirms the corresponding
+MySQL tables, but it contains no data rows. In particular, the `params` table is
+empty in the export, while its rows hold the request URL and URL fragments used
+by the PHP code. Obtain only those three parameter rows before building an n8n
+workflow. The time-index rows and old PHP dependencies can be replaced in the
+new implementation.
+
 ## Official References
 
 - DE Continuous API Read-only:
