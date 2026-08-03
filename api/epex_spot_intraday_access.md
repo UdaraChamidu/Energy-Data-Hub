@@ -217,9 +217,20 @@ configurations named `INTRA`, `CONT15`, and `CONT1H`. It parsed:
 The schema-only `scraper.sql` received on 2026-08-01 confirms the corresponding
 MySQL tables, but it contains no data rows. In particular, the `params` table is
 empty in the export, while its rows hold the request URL and URL fragments used
-by the PHP code. Obtain only those three parameter rows before building an n8n
-workflow. The time-index rows and old PHP dependencies can be replaced in the
-new implementation.
+by the PHP code. Those three parameter rows were the only additional legacy data
+needed to build a test workflow; the time-index rows and old PHP dependencies can
+be replaced in the new implementation.
+
+The parameter and time-index rows were received on 2026-08-03. They confirmed
+IDA1 auction and continuous product 15/60 requests. Live testing produced one
+valid 96-row auction table and one valid continuous hierarchy containing 96
+quarter-hour and 24 hourly rows. Other continuous requests returned the wrong
+table or an HTTP 202 AWS challenge, so the source is not yet proven reliable.
+
+The provisional `epex_spot_intraday_web_de` n8n workflow uses two requests per
+normal run, validates table type and complete row counts, and writes nothing for
+challenged, empty, partial or incorrectly selected responses. It must remain
+inactive until both branches pass a manual execution from the actual n8n host.
 
 ## Official References
 

@@ -18,7 +18,7 @@ SMARD.de ------------------+
 | --- | --- |
 | Germany-first requirements and API selection | Complete |
 | PostgreSQL schema, seed data, indexes, and views | Created by the operator |
-| Six importable n8n workflows | Implemented and locally validated |
+| Seven importable n8n workflows | Implemented and locally validated; EPEX requires a successful manual host test |
 | Grafana PostgreSQL datasource | Connected by the operator |
 | Germany Grafana dashboard | Imported and reported working |
 | Automated workflow and dashboard validation | Passing |
@@ -122,6 +122,7 @@ Apply these scripts to the same PostgreSQL database in this exact order:
 2. [`database/002_seed_germany_sources.sql`](database/002_seed_germany_sources.sql)
 3. [`database/003_create_views.sql`](database/003_create_views.sql)
 4. [`database/005_align_client_api_sources.sql`](database/005_align_client_api_sources.sql)
+5. [`database/006_add_epex_spot_web.sql`](database/006_add_epex_spot_web.sql)
 
 The scripts are idempotent and can be applied again when necessary.
 
@@ -154,6 +155,7 @@ Import and manually test the workflows in this order:
 4. [`workflows/03a_market_prices_smard_de_lu.json`](workflows/03a_market_prices_smard_de_lu.json)
 5. [`workflows/04_market_price_ohlc_builder.json`](workflows/04_market_price_ohlc_builder.json)
 6. [`workflows/05_ingestion_health_monitor.json`](workflows/05_ingestion_health_monitor.json)
+7. [`workflows/06_epex_spot_intraday_web_de.json`](workflows/06_epex_spot_intraday_web_de.json)
 
 Keep each workflow inactive until its manual execution succeeds. Activate it only after confirming the expected PostgreSQL rows.
 
@@ -211,6 +213,7 @@ node .\scripts\validate_grafana_dashboard.js
 | `market_prices_smard_de_lu` | 6 | Resolve the latest SMARD series and bulk-upsert valid prices |
 | `market_price_ohlc_builder` | 2 | Build separate 15/60-minute aggregates for each source |
 | `ingestion_health_monitor` | 2 | Insert, refresh, and resolve stale-data alerts |
+| `epex_spot_intraday_web_de` | 8 | Validate and store EPEX IDA1 auction and continuous 15/60-minute results |
 
 Two-node workflows are intentional when PostgreSQL performs the calculation atomically in one SQL statement.
 

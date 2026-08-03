@@ -172,6 +172,93 @@ function validateEntsoeParser(workflows) {
   console.log('PASS: ENTSO-E A44 parser sample');
 }
 
+function validateEpexParsers(workflows) {
+  const entry = workflows.find(
+    ({ file }) => file === '06_epex_spot_intraday_web_de.json',
+  );
+  if (!entry?.workflow) {
+    fail('EPEX workflow is unavailable for parser validation');
+    return;
+  }
+  if (entry.workflow.active !== false) {
+    fail('EPEX workflow must be imported inactive');
+  }
+
+  const httpNodes = entry.workflow.nodes.filter(
+    (node) => node.type === 'n8n-nodes-base.httpRequest',
+  );
+  if (httpNodes.length !== 2) {
+    fail('EPEX workflow must use exactly two normal HTTP requests per run');
+  }
+
+  const auctionNode = entry.workflow.nodes.find(
+    (node) => node.name === 'Parse EPEX Intraday Auction',
+  );
+  const continuousNode = entry.workflow.nodes.find(
+    (node) => node.name === 'Parse EPEX Continuous Results',
+  );
+  if (!auctionNode || !continuousNode) {
+    fail('EPEX parser nodes are missing');
+    return;
+  }
+
+  const auctionRows = Array.from(
+    { length: 96 },
+    (_, index) =>
+      `<tr class="child${index % 2 ? ' impair' : ''}">` +
+      '<td>10.0</td><td>11.0</td><td>10.5</td><td>50.25</td></tr>',
+  ).join('');
+  const auctionHtml =
+    `<!-- ${'x'.repeat(3000)} -->` +
+    '<div class="js-table-values"><table data-head="03.08.26"><tbody>' +
+    `${auctionRows}</tbody></table></div>`;
+  const auctionResult = new Function('$json', auctionNode.parameters.jsCode)({
+    data: auctionHtml,
+  })[0].json;
+
+  const continuousRows = [];
+  for (let hour = 0; hour < 24; hour += 1) {
+    continuousRows.push(
+      `<tr class="child-${hour}">` +
+        '<td>-10.00</td><td>100.00</td><td>50.00</td></tr>',
+    );
+    for (let quarter = 0; quarter < 4; quarter += 1) {
+      continuousRows.push(
+        `<tr class="child-${hour} lvl-2" data-quarter="${quarter}">` +
+          '<td>-5.00</td><td>90.00</td><td>45.00</td></tr>',
+      );
+    }
+  }
+  const continuousHtml =
+    `<!-- ${'x'.repeat(3000)} -->` +
+    '<div class="js-table-values"><table data-head="03.08.26">' +
+    '<thead><tr><th>Weight Avg.</th></tr></thead><tbody>' +
+    `${continuousRows.join('')}</tbody></table></div>`;
+  const continuousResult = new Function(
+    '$json',
+    continuousNode.parameters.jsCode,
+  )({ data: continuousHtml })[0].json;
+
+  if (
+    auctionResult.records_valid !== 96 ||
+    !auctionResult.sql.includes('epex_intraday_auction_results')
+  ) {
+    fail('EPEX auction parser sample failed');
+    return;
+  }
+  if (
+    continuousResult.quarter_hour_records !== 96 ||
+    continuousResult.hourly_records !== 24 ||
+    !continuousResult.sql.includes('market_price_ohlc') ||
+    !continuousResult.sql.includes("'intraday_continuous'")
+  ) {
+    fail('EPEX continuous parser sample failed');
+    return;
+  }
+
+  console.log('PASS: EPEX auction and continuous parser samples');
+}
+
 async function validateLiveFrequency(workflows) {
   const entry = workflows.find(({ file }) => file === '01_grid_frequency_netzfrequenzmessung_de.json');
   const parseNode = entry?.workflow?.nodes.find((node) => node.name === 'Parse Frequency XML');
@@ -198,6 +285,7 @@ async function main() {
   const workflows = loadWorkflows();
   validateSmardNullHandling(workflows);
   validateEntsoeParser(workflows);
+  validateEpexParsers(workflows);
 
   if (process.argv.includes('--live-smard')) {
     try {

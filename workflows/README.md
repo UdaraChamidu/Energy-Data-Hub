@@ -1,5 +1,23 @@
 # n8n Workflows
 
+## EPEX SPOT public results
+
+`06_epex_spot_intraday_web_de.json` is an inactive, provisional collector based
+on Peter's legacy URL parameters. It performs two normal requests every 15
+minutes:
+
+1. DE-LU intraday auction IDA1 results.
+2. Continuous results containing 15-minute and 60-minute Low/High/Last rows.
+
+Before importing it, run `database/006_add_epex_spot_web.sql`. After import, set
+the existing PostgreSQL credential on both Postgres nodes and execute the
+workflow manually. Both terminal nodes must succeed. Expected parser totals are
+96 auction rows and 120 continuous result rows on a normal 24-hour day.
+
+Do not activate it if either HTTP response is challenged/empty or a parser
+reports the wrong table or row count. The validation intentionally prevents
+partial or incorrectly selected EPEX pages from entering PostgreSQL.
+
 This folder contains starter n8n workflows for the Germany-first ingestion phase.
 
 ## Import Order

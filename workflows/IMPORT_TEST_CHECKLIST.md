@@ -8,6 +8,7 @@ Keep every workflow inactive until its manual test passes.
 - Apply `database/002_seed_germany_sources.sql`.
 - Apply `database/003_create_views.sql`.
 - Apply `database/005_align_client_api_sources.sql`.
+- Apply `database/006_add_epex_spot_web.sql`.
 - Configure `ENTSOE_SECURITY_TOKEN` in the n8n runtime.
 - Create one n8n PostgreSQL credential with SSL mode matching the client database.
 - Assign that credential to every PostgreSQL node after import.
@@ -32,6 +33,11 @@ Keep every workflow inactive until its manual test passes.
 6. `05_ingestion_health_monitor.json`
    - Confirm healthy data produces no new open alert.
    - Confirm repeated stale checks refresh one open alert instead of inserting one alert per minute.
+7. `06_epex_spot_intraday_web_de.json`
+   - Keep the workflow inactive and assign the PostgreSQL credential to both Postgres nodes.
+   - Run it manually and confirm both terminal Postgres nodes succeed.
+   - On a normal day, confirm 96 auction rows, 96 continuous 15-minute rows and 24 continuous hourly rows.
+   - Do not activate it if EPEX returns HTTP 202, an empty page, the wrong table or a row-count validation error.
 
 ## Verification Queries
 

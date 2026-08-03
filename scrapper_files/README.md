@@ -33,29 +33,42 @@ calculate interval boundaries directly. The old PHP libraries and MySQL
 connection file also do not need to be reused if the collector is rewritten for
 n8n and PostgreSQL.
 
-## One remaining input required before implementation
+## Parameter and time-index exports received
 
-The schema-only export does not contain the values from `scraper.params`.
-`epex-cron.php` reads its three EPEX request URLs and URL fragments from that
-table, so the current requests cannot be reconstructed or tested yet.
+Peter supplied `params.sql`, `timeidx15.sql`, `timeidx30.sql`, and
+`timeidx1h.sql` on 2026-08-03. The parameter rows identify:
 
-Ask Peter for only these three rows, as data or a screenshot:
+- `INTRA`: DE-LU intraday auction IDA1 results;
+- `CONT15`: German continuous results requested with product 15;
+- `CONT1H`: German continuous results requested with product 60; and
+- `CONT30`: German continuous results requested with product 30.
 
-```sql
-select se, url, var1, var2
-from scraper.params
-where se in ('INTRA', 'CONT15', 'CONT1H');
-```
+The old continuous page contains a hierarchy of hourly, half-hourly and
+quarter-hourly rows. The new parser uses the row hierarchy and calculates UTC
+interval boundaries from Europe/Berlin midnight, so the static time-index tables
+are not required and daylight-saving days can be handled without Peter's lookup
+tables.
 
-After receiving them, test each assembled URL against the current EPEX service.
-If the old URLs still work, implement a fresh parser and PostgreSQL upserts. If
-they no longer work, the schema and historical export remain useful, but they do
-not solve current EPEX website access.
+## Live test status
+
+Tests on 2026-08-03 produced mixed results:
+
+- The IDA1 auction URL returned HTTP 200 and exactly 96 valid quarter-hour rows.
+- A continuous URL returned the expected table once: 24 hourly rows, 48
+  half-hourly rows and 96 quarter-hourly rows.
+- Repeated continuous requests sometimes returned the auction table instead of
+  the requested continuous table.
+- Later requests received HTTP 202 with an AWS WAF challenge and an empty body.
+
+The generated n8n workflow therefore validates the table type, date, row counts,
+numbers and Low/High/Last bounds before creating SQL. It writes nothing for an
+empty, challenged, partial or wrong table. Keep it inactive until a manual run
+from the company's n8n host successfully completes both branches.
 
 ## Important findings
 
-- The EPEX URLs are stored as data in the old MySQL `params` table. The supplied
-  schema export defines that table but does not include its rows.
+- The EPEX URLs were recovered from `params.sql`; current delivery remains
+  dependent on EPEX returning the requested table consistently.
 - The EPEX job expects a SOCKS5 proxy on `127.0.0.1:9050` and additional proxy
   helper code.
 - Its HTML selectors are tied to an older page structure and may no longer match

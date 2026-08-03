@@ -10,10 +10,20 @@ Run these files in order:
 2. `002_seed_germany_sources.sql`
 3. `003_create_views.sql`
 4. `005_align_client_api_sources.sql`
+5. `006_add_epex_spot_web.sql`
 
 `004_upsert_examples.sql` is not a migration. It contains reference SQL snippets for n8n PostgreSQL nodes.
 
 `005_align_client_api_sources.sql` is idempotent and is especially important when `001-003` were applied before the SMARD collector was added.
+
+`006_add_epex_spot_web.sql` is idempotent and must be applied before the EPEX
+public-results workflow is tested.
+
+If direct PostgreSQL access is unavailable, import
+`database/n8n_workflows/006_add_epex_spot_web.json` into n8n. Assign the existing
+PostgreSQL credential to its single Postgres node, execute it once, and confirm
+that it returns `Migration 006 completed successfully`. Keep this one-time
+migration workflow inactive.
 
 ## What This Creates
 
@@ -42,6 +52,11 @@ Seeded providers:
 - `awattar`
 - `smard`
 - `calculated`
+- `epex_spot_web` after running `006_add_epex_spot_web.sql`
+
+EPEX web collection also adds `epex_intraday_auction_results` and
+`v_grafana_epex_intraday_auction`. Run migration `006` before importing or
+executing the EPEX n8n workflow.
 
 Seeded market:
 

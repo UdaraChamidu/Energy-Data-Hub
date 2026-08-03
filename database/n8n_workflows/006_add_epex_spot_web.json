@@ -1,0 +1,49 @@
+{
+  "name": "database_migration_006_add_epex_spot_web",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "migration-manual-trigger",
+      "name": "Run Migration Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Add Peter's public EPEX SPOT market-results source and auction storage.\n\nbegin;\n\ninsert into energy_data.data_sources (\n  code,\n  name,\n  base_url,\n  requires_auth,\n  is_active,\n  notes\n)\nvalues (\n  'epex_spot_web',\n  'EPEX SPOT public market results',\n  'https://www.epexspot.com/en/market-results',\n  false,\n  true,\n  'Client-requested web collector based on Peter''s legacy INTRA, CONT15 and CONT1H configuration. Validate website access and usage permission continuously.'\n)\non conflict (code) do update\nset\n  name = excluded.name,\n  base_url = excluded.base_url,\n  requires_auth = excluded.requires_auth,\n  is_active = excluded.is_active,\n  notes = excluded.notes,\n  updated_at = now();\n\ninsert into energy_data.collector_settings (key, value, description, is_secret)\nvalues\n  (\n    'EPEX_RESULTS_BASE_URL',\n    'https://www.epexspot.com/en/market-results',\n    'EPEX SPOT public market-results page used by Peter''s legacy collector.',\n    false\n  ),\n  (\n    'EPEX_MARKET_AREA',\n    'DE-LU',\n    'Germany/Luxembourg bidding zone for the Germany dashboard.',\n    false\n  ),\n  (\n    'EPEX_COLLECTION_INTERVAL_MINUTES',\n    '15',\n    'Normal polling interval for the EPEX public-page workflow.',\n    false\n  )\non conflict (key) do update\nset\n  value = excluded.value,\n  description = excluded.description,\n  is_secret = excluded.is_secret,\n  updated_at = now();\n\ncreate table if not exists energy_data.epex_intraday_auction_results (\n  id bigserial primary key,\n  source_id bigint not null references energy_data.data_sources(id),\n  market_id bigint not null references energy_data.markets(id),\n  auction_code text not null,\n  delivery_start timestamptz not null,\n  delivery_end timestamptz not null,\n  buy_volume_mwh numeric(16,3) not null,\n  sell_volume_mwh numeric(16,3) not null,\n  volume_mwh numeric(16,3) not null,\n  price_eur_mwh numeric(14,6) not null,\n  source_published_at timestamptz not null default timestamp with time zone '1970-01-01 00:00:00+00',\n  ingested_at timestamptz not null default now(),\n  raw_payload_id bigint references energy_data.raw_api_payloads(id),\n  unique (source_id, market_id, auction_code, delivery_start, delivery_end),\n  constraint epex_intraday_auction_window_chk check (delivery_end > delivery_start),\n  constraint epex_intraday_auction_volume_chk check (\n    buy_volume_mwh >= 0\n    and sell_volume_mwh >= 0\n    and volume_mwh >= 0\n  )\n);\n\ncreate index if not exists epex_intraday_auction_market_time_idx\non energy_data.epex_intraday_auction_results (market_id, delivery_start desc);\n\ncreate index if not exists epex_intraday_auction_source_time_idx\non energy_data.epex_intraday_auction_results (source_id, delivery_start desc);\n\ncreate or replace view energy_data.v_grafana_epex_intraday_auction as\nselect\n  r.delivery_start as \"time\",\n  r.delivery_end,\n  r.auction_code,\n  r.price_eur_mwh,\n  r.buy_volume_mwh,\n  r.sell_volume_mwh,\n  r.volume_mwh,\n  s.code as source_code,\n  m.country_code,\n  m.bidding_zone\nfrom energy_data.epex_intraday_auction_results r\njoin energy_data.data_sources s on s.id = r.source_id\njoin energy_data.markets m on m.id = r.market_id;\n\ncommit;\n\nselect\n  case\n    when exists (\n      select 1\n      from energy_data.data_sources\n      where code = 'epex_spot_web'\n    )\n    and to_regclass('energy_data.epex_intraday_auction_results') is not null\n    and to_regclass('energy_data.v_grafana_epex_intraday_auction') is not null\n    then 'Migration 006 completed successfully'\n    else 'Migration 006 verification failed'\n  end as migration_status;\n",
+        "options": {}
+      },
+      "id": "migration-postgres",
+      "name": "Apply and Verify Migration 006",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        260,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Run Migration Manually": {
+      "main": [
+        [
+          {
+            "node": "Apply and Verify Migration 006",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
