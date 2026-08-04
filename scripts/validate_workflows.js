@@ -259,6 +259,101 @@ function validateEpexParsers(workflows) {
   console.log('PASS: EPEX auction and continuous parser samples');
 }
 
+function energyChartsSample(intervalType) {
+  const prefix = intervalType === '15m'
+    ? 'Intraday Continuous 15 minutes '
+    : 'Intraday Continuous ';
+  const timestamps = intervalType === '15m'
+    ? [1785708000000, 1785708900000, 1785709800000]
+    : [1785708000000, 1785711600000, 1785715200000];
+  const series = (name, data) => ({
+    name: { en: `${prefix}${name} (DE-LU)` },
+    data,
+    date: 1785818342872,
+    unit: 'EUR/MWh',
+  });
+  return [
+    null,
+    { name: { en: 'Shared axis' }, data: [1, 2, 3], xAxisValues: timestamps },
+    series('Average Price', [50, 55, null]),
+    series('Low Price', [40, 45, null]),
+    series('High Price', [60, 65, null]),
+    series('ID1-Price', [51, 56, null]),
+    series('ID3-Price', [49, 54, null]),
+  ];
+}
+
+function validateEnergyChartsParsers(workflows) {
+  const entry = workflows.find(
+    ({ file }) => file === '07_market_prices_energy_charts_intraday_de_lu.json',
+  );
+  if (!entry?.workflow) {
+    fail('Fraunhofer Energy-Charts workflow is unavailable');
+    return;
+  }
+  if (entry.workflow.active !== false) {
+    fail('Fraunhofer Energy-Charts workflow must be imported inactive');
+  }
+
+  for (const [intervalType, nodeName] of [
+    ['15m', 'Parse Fraunhofer 15-Minute Prices'],
+    ['60m', 'Parse Fraunhofer 60-Minute Prices'],
+  ]) {
+    const node = entry.workflow.nodes.find((candidate) => candidate.name === nodeName);
+    if (!node) {
+      fail(`Fraunhofer parser is missing: ${nodeName}`);
+      continue;
+    }
+    const result = new Function('$json', node.parameters.jsCode)({
+      data: JSON.stringify(energyChartsSample(intervalType)),
+    })[0].json;
+    const splitItems = energyChartsSample(intervalType).map((json) => ({ json }));
+    const splitResult = new Function('$json', '$input', node.parameters.jsCode)(
+      {},
+      { all: () => splitItems },
+    )[0].json;
+    if (
+      result.interval_type !== intervalType ||
+      result.records_valid !== 2 ||
+      splitResult.records_valid !== 2 ||
+      !result.sql.includes('energy_charts_intraday_prices') ||
+      result.sql.includes('last_price_eur_mwh')
+    ) {
+      fail(`Fraunhofer ${intervalType} parser sample failed`);
+    }
+  }
+
+  console.log('PASS: Fraunhofer Energy-Charts parser samples');
+}
+
+async function validateLiveEnergyCharts(workflows) {
+  const entry = workflows.find(
+    ({ file }) => file === '07_market_prices_energy_charts_intraday_de_lu.json',
+  );
+  const buildNode = entry?.workflow?.nodes.find(
+    (node) => node.name === 'Build Current Fraunhofer URLs',
+  );
+  if (!buildNode) throw new Error('Fraunhofer URL builder is unavailable');
+  const urls = new Function('$json', buildNode.parameters.jsCode)({})[0].json;
+
+  for (const [intervalType, url, nodeName] of [
+    ['15m', urls.quarter_hour_url, 'Parse Fraunhofer 15-Minute Prices'],
+    ['60m', urls.hourly_url, 'Parse Fraunhofer 60-Minute Prices'],
+  ]) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`${intervalType} file returned HTTP ${response.status}`);
+    const body = await response.text();
+    const node = entry.workflow.nodes.find((candidate) => candidate.name === nodeName);
+    const result = new Function('$json', node.parameters.jsCode)({ data: body })[0].json;
+    if (result.records_valid < 1) {
+      throw new Error(`${intervalType} parser produced no valid rows`);
+    }
+    console.log(
+      `PASS: live Fraunhofer ${intervalType} contract (${result.records_valid} rows)`,
+    );
+  }
+}
+
 async function validateLiveFrequency(workflows) {
   const entry = workflows.find(({ file }) => file === '01_grid_frequency_netzfrequenzmessung_de.json');
   const parseNode = entry?.workflow?.nodes.find((node) => node.name === 'Parse Frequency XML');
@@ -286,6 +381,15 @@ async function main() {
   validateSmardNullHandling(workflows);
   validateEntsoeParser(workflows);
   validateEpexParsers(workflows);
+  validateEnergyChartsParsers(workflows);
+
+  if (process.argv.includes('--live-energy-charts')) {
+    try {
+      await validateLiveEnergyCharts(workflows);
+    } catch (error) {
+      fail(`live Fraunhofer Energy-Charts contract: ${error.message}`);
+    }
+  }
 
   if (process.argv.includes('--live-smard')) {
     try {

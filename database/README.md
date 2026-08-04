@@ -11,6 +11,7 @@ Run these files in order:
 3. `003_create_views.sql`
 4. `005_align_client_api_sources.sql`
 5. `006_add_epex_spot_web.sql`
+6. `007_add_energy_charts_intraday.sql`
 
 `004_upsert_examples.sql` is not a migration. It contains reference SQL snippets for n8n PostgreSQL nodes.
 
@@ -24,6 +25,11 @@ If direct PostgreSQL access is unavailable, import
 PostgreSQL credential to its single Postgres node, execute it once, and confirm
 that it returns `Migration 006 completed successfully`. Keep this one-time
 migration workflow inactive.
+
+For Fraunhofer, import
+`database/n8n_workflows/007_add_energy_charts_intraday.json`, assign the existing
+PostgreSQL credential, execute it once, and confirm
+`Migration 007 completed successfully`.
 
 ## What This Creates
 
@@ -53,10 +59,14 @@ Seeded providers:
 - `smard`
 - `calculated`
 - `epex_spot_web` after running `006_add_epex_spot_web.sql`
+- `energy_charts` after running `007_add_energy_charts_intraday.sql`
 
 EPEX web collection also adds `epex_intraday_auction_results` and
 `v_grafana_epex_intraday_auction`. Run migration `006` before importing or
 executing the EPEX n8n workflow.
+
+Migration `007` adds `energy_charts_intraday_prices` and three Grafana views for
+the client-approved provisional Fraunhofer Average/Low/High/ID1/ID3 feed.
 
 Seeded market:
 

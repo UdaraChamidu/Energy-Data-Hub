@@ -41,6 +41,17 @@ five current-value panels on the right, and retains the aligned historical chart
 below them. It has the separate UID `energy-data-hub-de-compact`, so importing it
 does not replace the original dashboard.
 
+## Fraunhofer Test Dashboard
+
+After migration `007` and workflow `07` succeed, import
+`grafana/dashboards/germany-energy-monitoring-fraunhofer.json`. This separate
+dashboard uses the approved provisional Fraunhofer source and has UID
+`energy-data-hub-de-fraunhofer`.
+
+Fraunhofer publishes delayed continuous intraday Average, Low, High, ID1 and
+ID3 values. The dashboard therefore says `Average`, never `Last`, and labels
+summary values as `Latest Published` or `Latest Day` rather than live/today.
+
 For public sharing, import
 `grafana/dashboards/germany-energy-monitoring-compact-external.json` instead. It
 uses automatic price-source selection without a template variable, which Grafana

@@ -1,0 +1,49 @@
+{
+  "name": "database_migration_007_add_energy_charts_intraday",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "migration-007-manual-trigger",
+      "name": "Run Migration 007 Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Add Fraunhofer ISE Energy-Charts as the provisional intraday source.\n\nbegin;\n\ninsert into energy_data.data_sources (\n  code,\n  name,\n  base_url,\n  requires_auth,\n  is_active,\n  notes\n)\nvalues (\n  'energy_charts',\n  'Fraunhofer ISE Energy-Charts',\n  'https://energy-charts.info/charts/price_spot_market/data/de/',\n  false,\n  true,\n  'Client-approved provisional source. Provides continuous intraday Average, Low, High, ID1 and ID3, but not Last.'\n)\non conflict (code) do update\nset\n  name = excluded.name,\n  base_url = excluded.base_url,\n  requires_auth = excluded.requires_auth,\n  is_active = excluded.is_active,\n  notes = excluded.notes,\n  updated_at = now();\n\ninsert into energy_data.collector_settings (key, value, description, is_secret)\nvalues\n  (\n    'ENERGY_CHARTS_INTRADAY_BASE_URL',\n    'https://energy-charts.info/charts/price_spot_market/data/de/',\n    'Fraunhofer Energy-Charts weekly JSON directory used by the provisional collector.',\n    false\n  ),\n  (\n    'ENERGY_CHARTS_COLLECTION_INTERVAL_MINUTES',\n    '30',\n    'Polling interval for the two provisional intraday files.',\n    false\n  )\non conflict (key) do update\nset\n  value = excluded.value,\n  description = excluded.description,\n  is_secret = excluded.is_secret,\n  updated_at = now();\n\ncreate table if not exists energy_data.energy_charts_intraday_prices (\n  id bigserial primary key,\n  source_id bigint not null references energy_data.data_sources(id),\n  market_id bigint not null references energy_data.markets(id),\n  interval_type text not null,\n  interval_start timestamptz not null,\n  interval_end timestamptz not null,\n  average_price_eur_mwh numeric(14,6) not null,\n  low_price_eur_mwh numeric(14,6) not null,\n  high_price_eur_mwh numeric(14,6) not null,\n  id1_price_eur_mwh numeric(14,6),\n  id3_price_eur_mwh numeric(14,6),\n  source_published_at timestamptz not null,\n  ingested_at timestamptz not null default now(),\n  raw_payload_id bigint references energy_data.raw_api_payloads(id),\n  unique (source_id, market_id, interval_type, interval_start, interval_end),\n  constraint energy_charts_interval_type_chk check (interval_type in ('15m', '60m')),\n  constraint energy_charts_window_chk check (interval_end > interval_start),\n  constraint energy_charts_price_bounds_chk check (\n    high_price_eur_mwh >= low_price_eur_mwh\n    and average_price_eur_mwh between low_price_eur_mwh and high_price_eur_mwh\n  )\n);\n\ncreate index if not exists energy_charts_intraday_market_time_idx\non energy_data.energy_charts_intraday_prices (market_id, interval_type, interval_start desc);\n\ncreate index if not exists energy_charts_intraday_source_time_idx\non energy_data.energy_charts_intraday_prices (source_id, interval_start desc);\n\ncreate or replace view energy_data.v_grafana_energy_charts_intraday as\nselect\n  p.interval_start as \"time\",\n  p.interval_start,\n  p.interval_end,\n  p.interval_type,\n  p.average_price_eur_mwh,\n  p.low_price_eur_mwh,\n  p.high_price_eur_mwh,\n  p.id1_price_eur_mwh,\n  p.id3_price_eur_mwh,\n  p.source_published_at,\n  p.ingested_at,\n  s.code as source_code,\n  m.country_code,\n  m.bidding_zone\nfrom energy_data.energy_charts_intraday_prices p\njoin energy_data.data_sources s on s.id = p.source_id\njoin energy_data.markets m on m.id = p.market_id;\n\ncreate or replace view energy_data.v_grafana_energy_charts_intraday_latest as\nselect distinct on (p.interval_type, m.id)\n  p.interval_start as \"time\",\n  p.interval_end,\n  p.interval_type,\n  p.average_price_eur_mwh,\n  p.low_price_eur_mwh,\n  p.high_price_eur_mwh,\n  p.id1_price_eur_mwh,\n  p.id3_price_eur_mwh,\n  p.source_published_at,\n  p.ingested_at,\n  m.country_code,\n  m.bidding_zone\nfrom energy_data.energy_charts_intraday_prices p\njoin energy_data.markets m on m.id = p.market_id\norder by p.interval_type, m.id, p.interval_start desc, p.source_published_at desc;\n\ncreate or replace view energy_data.v_grafana_energy_charts_intraday_stats_today as\nselect\n  p.interval_type,\n  min(p.low_price_eur_mwh) as low_price_eur_mwh,\n  max(p.high_price_eur_mwh) as high_price_eur_mwh,\n  max(p.source_published_at) as source_published_at,\n  m.country_code,\n  m.bidding_zone\nfrom energy_data.energy_charts_intraday_prices p\njoin energy_data.markets m on m.id = p.market_id\nwhere (p.interval_start at time zone m.timezone)::date =\n      (now() at time zone m.timezone)::date\ngroup by p.interval_type, m.country_code, m.bidding_zone;\n\ncreate or replace view energy_data.v_grafana_energy_charts_intraday_stats_latest_day as\nwith latest_days as (\n  select\n    p.market_id,\n    p.interval_type,\n    max((p.interval_start at time zone m.timezone)::date) as latest_date\n  from energy_data.energy_charts_intraday_prices p\n  join energy_data.markets m on m.id = p.market_id\n  group by p.market_id, p.interval_type\n)\nselect\n  p.interval_type,\n  min(p.low_price_eur_mwh) as low_price_eur_mwh,\n  max(p.high_price_eur_mwh) as high_price_eur_mwh,\n  max(p.source_published_at) as source_published_at,\n  d.latest_date,\n  m.country_code,\n  m.bidding_zone\nfrom energy_data.energy_charts_intraday_prices p\njoin energy_data.markets m on m.id = p.market_id\njoin latest_days d\n  on d.market_id = p.market_id\n and d.interval_type = p.interval_type\n and d.latest_date = (p.interval_start at time zone m.timezone)::date\ngroup by p.interval_type, d.latest_date, m.country_code, m.bidding_zone;\n\ncommit;\n\nselect case\n  when exists (\n    select 1 from energy_data.data_sources where code = 'energy_charts'\n  )\n  and to_regclass('energy_data.energy_charts_intraday_prices') is not null\n  and to_regclass('energy_data.v_grafana_energy_charts_intraday') is not null\n  then 'Migration 007 completed successfully'\n  else 'Migration 007 verification failed'\nend as migration_status;\n",
+        "options": {}
+      },
+      "id": "migration-007-postgres",
+      "name": "Apply and Verify Migration 007",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        280,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Run Migration 007 Manually": {
+      "main": [
+        [
+          {
+            "node": "Apply and Verify Migration 007",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

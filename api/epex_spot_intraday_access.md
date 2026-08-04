@@ -2,6 +2,11 @@
 
 Research checked: 2026-07-31.
 
+Client decision on 2026-08-04: use Fraunhofer Energy-Charts as the provisional
+test source and reconsider licensed EPEX access later. The implemented workflow
+polls the two weekly files every 30 minutes and stores Average/Low/High/ID1/ID3
+without labelling Average as Last.
+
 ## Requirement
 
 The client requires genuine EPEX SPOT Germany continuous intraday data:

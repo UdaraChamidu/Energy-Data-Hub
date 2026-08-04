@@ -1,0 +1,249 @@
+{
+  "name": "market_prices_energy_charts_intraday_de_lu",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "energy-charts-schedule",
+      "name": "Every 30 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function berlinDateParts(date) {\n  const parts = new Intl.DateTimeFormat('en-CA', {\n    timeZone: 'Europe/Berlin',\n    year: 'numeric',\n    month: '2-digit',\n    day: '2-digit',\n  }).formatToParts(date);\n  return Object.fromEntries(parts.map((part) => [part.type, part.value]));\n}\n\nfunction isoWeek(parts) {\n  const date = new Date(`${parts.year}-${parts.month}-${parts.day}T12:00:00Z`);\n  const day = date.getUTCDay() || 7;\n  date.setUTCDate(date.getUTCDate() + 4 - day);\n  const weekYear = date.getUTCFullYear();\n  const yearStart = new Date(Date.UTC(weekYear, 0, 1));\n  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);\n  return { year: weekYear, week: String(week).padStart(2, '0') };\n}\n\nconst current = isoWeek(berlinDateParts(new Date()));\nconst base = 'https://energy-charts.info/charts/price_spot_market/data/de';\n\nreturn [{\n  json: {\n    iso_year: current.year,\n    iso_week: current.week,\n    quarter_hour_url: `${base}/week_15min_${current.year}_${current.week}.json`,\n    hourly_url: `${base}/week_${current.year}_${current.week}.json`,\n  },\n}];\n"
+      },
+      "id": "energy-charts-build-urls",
+      "name": "Build Current Fraunhofer URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.quarter_hour_url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Energy-Data-Hub/1.0 (Fraunhofer provisional collector)"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 45000
+        }
+      },
+      "id": "energy-charts-fetch-15m",
+      "name": "Fetch Fraunhofer 15-Minute JSON",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const intervalType = '15m';\nconst intervalMinutes = intervalType === '15m' ? 15 : 60;\nconst inputItems = typeof $input !== 'undefined' ? $input.all() : [];\nlet payload;\nif (inputItems.length > 1) {\n  payload = inputItems.map((item) => item.json);\n} else {\n  const input = inputItems[0]?.json ?? $json;\n  if (typeof input?.body === 'string') payload = input.body;\n  else if (typeof input?.data === 'string') payload = input.data;\n  else payload = input;\n}\nif (typeof payload === 'string') payload = JSON.parse(payload);\nif (!Array.isArray(payload) || payload.length === 0) {\n  throw new Error('Unexpected Energy-Charts response: series array is missing.');\n}\n\nconst axisSeries = payload.find((series) => series && Array.isArray(series.xAxisValues));\nconst timestamps = axisSeries?.xAxisValues;\nif (!Array.isArray(timestamps) || timestamps.length === 0) {\n  throw new Error('Energy-Charts response has no shared timestamp axis.');\n}\n\nfunction englishName(series) {\n  let name = series?.name;\n  while (Array.isArray(name)) name = name[0];\n  return typeof name === 'string' ? name : name?.en;\n}\n\nconst prefix = intervalType === '15m'\n  ? 'Intraday Continuous 15 minutes '\n  : 'Intraday Continuous ';\nconst expectedNames = {\n  average: `${prefix}Average Price (DE-LU)`,\n  low: `${prefix}Low Price (DE-LU)`,\n  high: `${prefix}High Price (DE-LU)`,\n  id1: `${prefix}ID1-Price (DE-LU)`,\n  id3: `${prefix}ID3-Price (DE-LU)`,\n};\nconst selected = {};\nfor (const [field, name] of Object.entries(expectedNames)) {\n  selected[field] = payload.find((series) => englishName(series) === name);\n  if (!selected[field] || !Array.isArray(selected[field].data)) {\n    throw new Error(`Energy-Charts series is missing: ${name}`);\n  }\n  if (selected[field].data.length !== timestamps.length) {\n    throw new Error(`Energy-Charts ${name} length does not match the timestamp axis.`);\n  }\n}\n\nfunction finiteOrNull(value) {\n  if (value === null || value === '' || value === undefined) return null;\n  const parsed = Number(value);\n  return Number.isFinite(parsed) ? parsed : null;\n}\n\nconst rows = [];\nfor (let index = 0; index < timestamps.length; index += 1) {\n  const timestamp = Number(timestamps[index]);\n  const average = finiteOrNull(selected.average.data[index]);\n  const low = finiteOrNull(selected.low.data[index]);\n  const high = finiteOrNull(selected.high.data[index]);\n  if (!Number.isFinite(timestamp) || average === null || low === null || high === null) continue;\n  if (high < low || average < low || average > high) {\n    throw new Error(`Invalid Energy-Charts price bounds at timestamp ${timestamp}.`);\n  }\n  rows.push({\n    interval_start_ms: timestamp,\n    average_price_eur_mwh: average,\n    low_price_eur_mwh: low,\n    high_price_eur_mwh: high,\n    id1_price_eur_mwh: finiteOrNull(selected.id1.data[index]),\n    id3_price_eur_mwh: finiteOrNull(selected.id3.data[index]),\n  });\n}\nif (rows.length === 0) {\n  throw new Error(`Energy-Charts ${intervalType} response contains no complete published rows.`);\n}\n\nconst publishedMs = Math.max(\n  ...payload.map((series) => Number(series?.date)).filter(Number.isFinite),\n);\nif (!Number.isFinite(publishedMs)) {\n  throw new Error('Energy-Charts response has no valid publication timestamp.');\n}\nconst sourcePublishedAt = new Date(publishedMs).toISOString();\n\nfunction sqlString(value) {\n  if (value === null || value === undefined) return 'null';\n  return `'${String(value).replace(/'/g, \"''\")}'`;\n}\nfunction sqlJson(value) {\n  return `${sqlString(JSON.stringify(value))}::jsonb`;\n}\n\nconst workflowName = 'market_prices_energy_charts_intraday_de_lu';\nconst requestUrl = intervalType === '15m'\n  ? 'https://energy-charts.info/charts/price_spot_market/data/de/week_15min_CURRENT.json'\n  : 'https://energy-charts.info/charts/price_spot_market/data/de/week_CURRENT.json';\nconst normalizedPayload = {\n  interval_type: intervalType,\n  source_published_at: sourcePublishedAt,\n  rows,\n};\nconst payloadHash = JSON.stringify(normalizedPayload);\n\nconst sql = `with source_market as (\n  select s.id as source_id, m.id as market_id\n  from energy_data.data_sources s\n  cross join energy_data.markets m\n  where s.code = 'energy_charts'\n    and m.country_code = 'DE'\n    and m.bidding_zone = 'DE-LU'\n), required_source_market as (\n  select\n    (select source_id from source_market) as source_id,\n    (select market_id from source_market) as market_id\n), existing_payload as (\n  select r.id\n  from energy_data.raw_api_payloads r\n  cross join required_source_market sm\n  where r.source_id = sm.source_id\n    and r.request_hash = md5(${sqlString(payloadHash)})\n  order by r.received_at desc\n  limit 1\n), inserted_payload as (\n  insert into energy_data.raw_api_payloads (\n    source_id, workflow_name, request_url, request_hash, response_status, payload\n  )\n  select\n    sm.source_id,\n    ${sqlString(workflowName)},\n    ${sqlString(requestUrl)},\n    md5(${sqlString(payloadHash)}),\n    200,\n    ${sqlJson(normalizedPayload)}\n  from required_source_market sm\n  where not exists (select 1 from existing_payload)\n  returning id\n), raw_payload as (\n  select id from inserted_payload\n  union all\n  select id from existing_payload\n  limit 1\n), input_rows as (\n  select *\n  from jsonb_to_recordset(${sqlJson(rows)}) as x(\n    interval_start_ms bigint,\n    average_price_eur_mwh numeric,\n    low_price_eur_mwh numeric,\n    high_price_eur_mwh numeric,\n    id1_price_eur_mwh numeric,\n    id3_price_eur_mwh numeric\n  )\n), upserted as (\n  insert into energy_data.energy_charts_intraday_prices (\n    source_id, market_id, interval_type, interval_start, interval_end,\n    average_price_eur_mwh, low_price_eur_mwh, high_price_eur_mwh,\n    id1_price_eur_mwh, id3_price_eur_mwh, source_published_at, raw_payload_id\n  )\n  select\n    sm.source_id,\n    sm.market_id,\n    ${sqlString(intervalType)},\n    to_timestamp(i.interval_start_ms / 1000.0),\n    to_timestamp(i.interval_start_ms / 1000.0) + make_interval(mins => ${intervalMinutes}),\n    i.average_price_eur_mwh,\n    i.low_price_eur_mwh,\n    i.high_price_eur_mwh,\n    i.id1_price_eur_mwh,\n    i.id3_price_eur_mwh,\n    ${sqlString(sourcePublishedAt)}::timestamptz,\n    rp.id\n  from input_rows i\n  cross join required_source_market sm\n  cross join raw_payload rp\n  on conflict (source_id, market_id, interval_type, interval_start, interval_end)\n  do update set\n    average_price_eur_mwh = excluded.average_price_eur_mwh,\n    low_price_eur_mwh = excluded.low_price_eur_mwh,\n    high_price_eur_mwh = excluded.high_price_eur_mwh,\n    id1_price_eur_mwh = excluded.id1_price_eur_mwh,\n    id3_price_eur_mwh = excluded.id3_price_eur_mwh,\n    source_published_at = excluded.source_published_at,\n    raw_payload_id = excluded.raw_payload_id,\n    ingested_at = now()\n  returning 1\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name, source_id, finished_at, status, records_read, records_written, metadata\n)\nselect\n  ${sqlString(workflowName)},\n  sm.source_id,\n  now(),\n  'success',\n  ${timestamps.length},\n  count(*)::integer,\n  ${sqlJson({ interval_type: intervalType, source_published_at: sourcePublishedAt })}\nfrom required_source_market sm\ncross join upserted\ngroup by sm.source_id\nreturning status, records_read, records_written;`;\n\nreturn [{\n  json: {\n    workflow_name: workflowName,\n    source: 'energy_charts',\n    interval_type: intervalType,\n    source_published_at: sourcePublishedAt,\n    records_read: timestamps.length,\n    records_valid: rows.length,\n    sql,\n  },\n}];\n"
+      },
+      "id": "energy-charts-parse-15m",
+      "name": "Parse Fraunhofer 15-Minute Prices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{$json.sql}}",
+        "options": {}
+      },
+      "id": "energy-charts-store-15m",
+      "name": "Store Fraunhofer 15-Minute Prices",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1020,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.hourly_url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Energy-Data-Hub/1.0 (Fraunhofer provisional collector)"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 45000
+        }
+      },
+      "id": "energy-charts-fetch-60m",
+      "name": "Fetch Fraunhofer 60-Minute JSON",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        240
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const intervalType = '60m';\nconst intervalMinutes = intervalType === '15m' ? 15 : 60;\nconst inputItems = typeof $input !== 'undefined' ? $input.all() : [];\nlet payload;\nif (inputItems.length > 1) {\n  payload = inputItems.map((item) => item.json);\n} else {\n  const input = inputItems[0]?.json ?? $json;\n  if (typeof input?.body === 'string') payload = input.body;\n  else if (typeof input?.data === 'string') payload = input.data;\n  else payload = input;\n}\nif (typeof payload === 'string') payload = JSON.parse(payload);\nif (!Array.isArray(payload) || payload.length === 0) {\n  throw new Error('Unexpected Energy-Charts response: series array is missing.');\n}\n\nconst axisSeries = payload.find((series) => series && Array.isArray(series.xAxisValues));\nconst timestamps = axisSeries?.xAxisValues;\nif (!Array.isArray(timestamps) || timestamps.length === 0) {\n  throw new Error('Energy-Charts response has no shared timestamp axis.');\n}\n\nfunction englishName(series) {\n  let name = series?.name;\n  while (Array.isArray(name)) name = name[0];\n  return typeof name === 'string' ? name : name?.en;\n}\n\nconst prefix = intervalType === '15m'\n  ? 'Intraday Continuous 15 minutes '\n  : 'Intraday Continuous ';\nconst expectedNames = {\n  average: `${prefix}Average Price (DE-LU)`,\n  low: `${prefix}Low Price (DE-LU)`,\n  high: `${prefix}High Price (DE-LU)`,\n  id1: `${prefix}ID1-Price (DE-LU)`,\n  id3: `${prefix}ID3-Price (DE-LU)`,\n};\nconst selected = {};\nfor (const [field, name] of Object.entries(expectedNames)) {\n  selected[field] = payload.find((series) => englishName(series) === name);\n  if (!selected[field] || !Array.isArray(selected[field].data)) {\n    throw new Error(`Energy-Charts series is missing: ${name}`);\n  }\n  if (selected[field].data.length !== timestamps.length) {\n    throw new Error(`Energy-Charts ${name} length does not match the timestamp axis.`);\n  }\n}\n\nfunction finiteOrNull(value) {\n  if (value === null || value === '' || value === undefined) return null;\n  const parsed = Number(value);\n  return Number.isFinite(parsed) ? parsed : null;\n}\n\nconst rows = [];\nfor (let index = 0; index < timestamps.length; index += 1) {\n  const timestamp = Number(timestamps[index]);\n  const average = finiteOrNull(selected.average.data[index]);\n  const low = finiteOrNull(selected.low.data[index]);\n  const high = finiteOrNull(selected.high.data[index]);\n  if (!Number.isFinite(timestamp) || average === null || low === null || high === null) continue;\n  if (high < low || average < low || average > high) {\n    throw new Error(`Invalid Energy-Charts price bounds at timestamp ${timestamp}.`);\n  }\n  rows.push({\n    interval_start_ms: timestamp,\n    average_price_eur_mwh: average,\n    low_price_eur_mwh: low,\n    high_price_eur_mwh: high,\n    id1_price_eur_mwh: finiteOrNull(selected.id1.data[index]),\n    id3_price_eur_mwh: finiteOrNull(selected.id3.data[index]),\n  });\n}\nif (rows.length === 0) {\n  throw new Error(`Energy-Charts ${intervalType} response contains no complete published rows.`);\n}\n\nconst publishedMs = Math.max(\n  ...payload.map((series) => Number(series?.date)).filter(Number.isFinite),\n);\nif (!Number.isFinite(publishedMs)) {\n  throw new Error('Energy-Charts response has no valid publication timestamp.');\n}\nconst sourcePublishedAt = new Date(publishedMs).toISOString();\n\nfunction sqlString(value) {\n  if (value === null || value === undefined) return 'null';\n  return `'${String(value).replace(/'/g, \"''\")}'`;\n}\nfunction sqlJson(value) {\n  return `${sqlString(JSON.stringify(value))}::jsonb`;\n}\n\nconst workflowName = 'market_prices_energy_charts_intraday_de_lu';\nconst requestUrl = intervalType === '15m'\n  ? 'https://energy-charts.info/charts/price_spot_market/data/de/week_15min_CURRENT.json'\n  : 'https://energy-charts.info/charts/price_spot_market/data/de/week_CURRENT.json';\nconst normalizedPayload = {\n  interval_type: intervalType,\n  source_published_at: sourcePublishedAt,\n  rows,\n};\nconst payloadHash = JSON.stringify(normalizedPayload);\n\nconst sql = `with source_market as (\n  select s.id as source_id, m.id as market_id\n  from energy_data.data_sources s\n  cross join energy_data.markets m\n  where s.code = 'energy_charts'\n    and m.country_code = 'DE'\n    and m.bidding_zone = 'DE-LU'\n), required_source_market as (\n  select\n    (select source_id from source_market) as source_id,\n    (select market_id from source_market) as market_id\n), existing_payload as (\n  select r.id\n  from energy_data.raw_api_payloads r\n  cross join required_source_market sm\n  where r.source_id = sm.source_id\n    and r.request_hash = md5(${sqlString(payloadHash)})\n  order by r.received_at desc\n  limit 1\n), inserted_payload as (\n  insert into energy_data.raw_api_payloads (\n    source_id, workflow_name, request_url, request_hash, response_status, payload\n  )\n  select\n    sm.source_id,\n    ${sqlString(workflowName)},\n    ${sqlString(requestUrl)},\n    md5(${sqlString(payloadHash)}),\n    200,\n    ${sqlJson(normalizedPayload)}\n  from required_source_market sm\n  where not exists (select 1 from existing_payload)\n  returning id\n), raw_payload as (\n  select id from inserted_payload\n  union all\n  select id from existing_payload\n  limit 1\n), input_rows as (\n  select *\n  from jsonb_to_recordset(${sqlJson(rows)}) as x(\n    interval_start_ms bigint,\n    average_price_eur_mwh numeric,\n    low_price_eur_mwh numeric,\n    high_price_eur_mwh numeric,\n    id1_price_eur_mwh numeric,\n    id3_price_eur_mwh numeric\n  )\n), upserted as (\n  insert into energy_data.energy_charts_intraday_prices (\n    source_id, market_id, interval_type, interval_start, interval_end,\n    average_price_eur_mwh, low_price_eur_mwh, high_price_eur_mwh,\n    id1_price_eur_mwh, id3_price_eur_mwh, source_published_at, raw_payload_id\n  )\n  select\n    sm.source_id,\n    sm.market_id,\n    ${sqlString(intervalType)},\n    to_timestamp(i.interval_start_ms / 1000.0),\n    to_timestamp(i.interval_start_ms / 1000.0) + make_interval(mins => ${intervalMinutes}),\n    i.average_price_eur_mwh,\n    i.low_price_eur_mwh,\n    i.high_price_eur_mwh,\n    i.id1_price_eur_mwh,\n    i.id3_price_eur_mwh,\n    ${sqlString(sourcePublishedAt)}::timestamptz,\n    rp.id\n  from input_rows i\n  cross join required_source_market sm\n  cross join raw_payload rp\n  on conflict (source_id, market_id, interval_type, interval_start, interval_end)\n  do update set\n    average_price_eur_mwh = excluded.average_price_eur_mwh,\n    low_price_eur_mwh = excluded.low_price_eur_mwh,\n    high_price_eur_mwh = excluded.high_price_eur_mwh,\n    id1_price_eur_mwh = excluded.id1_price_eur_mwh,\n    id3_price_eur_mwh = excluded.id3_price_eur_mwh,\n    source_published_at = excluded.source_published_at,\n    raw_payload_id = excluded.raw_payload_id,\n    ingested_at = now()\n  returning 1\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name, source_id, finished_at, status, records_read, records_written, metadata\n)\nselect\n  ${sqlString(workflowName)},\n  sm.source_id,\n  now(),\n  'success',\n  ${timestamps.length},\n  count(*)::integer,\n  ${sqlJson({ interval_type: intervalType, source_published_at: sourcePublishedAt })}\nfrom required_source_market sm\ncross join upserted\ngroup by sm.source_id\nreturning status, records_read, records_written;`;\n\nreturn [{\n  json: {\n    workflow_name: workflowName,\n    source: 'energy_charts',\n    interval_type: intervalType,\n    source_published_at: sourcePublishedAt,\n    records_read: timestamps.length,\n    records_valid: rows.length,\n    sql,\n  },\n}];\n"
+      },
+      "id": "energy-charts-parse-60m",
+      "name": "Parse Fraunhofer 60-Minute Prices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{$json.sql}}",
+        "options": {}
+      },
+      "id": "energy-charts-store-60m",
+      "name": "Store Fraunhofer 60-Minute Prices",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1020,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Every 30 minutes": {
+      "main": [
+        [
+          {
+            "node": "Build Current Fraunhofer URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Current Fraunhofer URLs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Fraunhofer 15-Minute JSON",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Fraunhofer 60-Minute JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Fraunhofer 15-Minute JSON": {
+      "main": [
+        [
+          {
+            "node": "Parse Fraunhofer 15-Minute Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Fraunhofer 15-Minute Prices": {
+      "main": [
+        [
+          {
+            "node": "Store Fraunhofer 15-Minute Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Fraunhofer 60-Minute JSON": {
+      "main": [
+        [
+          {
+            "node": "Parse Fraunhofer 60-Minute Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Fraunhofer 60-Minute Prices": {
+      "main": [
+        [
+          {
+            "node": "Store Fraunhofer 60-Minute Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

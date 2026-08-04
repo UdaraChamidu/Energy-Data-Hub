@@ -10,6 +10,8 @@ netzfrequenzmessung.de ----+
 ENTSO-E Transparency ------+--> n8n --> PostgreSQL --> Grafana
                            |
 SMARD.de ------------------+
+                           |
+Fraunhofer Energy-Charts --+
 ```
 
 ## Current Status
@@ -18,7 +20,7 @@ SMARD.de ------------------+
 | --- | --- |
 | Germany-first requirements and API selection | Complete |
 | PostgreSQL schema, seed data, indexes, and views | Created by the operator |
-| Seven importable n8n workflows | Implemented and locally validated; EPEX requires a successful manual host test |
+| Eight importable n8n workflows | Implemented and locally validated; Fraunhofer live contract passing; EPEX kept inactive |
 | Grafana PostgreSQL datasource | Connected by the operator |
 | Germany Grafana dashboard | Imported and reported working |
 | Automated workflow and dashboard validation | Passing |
@@ -56,6 +58,7 @@ All timestamps are stored as PostgreSQL `timestamptz`. Grafana displays them usi
 | Price fallback/cross-check | SMARD filter `4169`, region `DE-LU` | None | Every 15 minutes |
 | 15/60-minute derived values | PostgreSQL aggregation of stored price points | None | Every 5 minutes |
 | Ingestion health | PostgreSQL health view | None | Every minute |
+| Provisional continuous intraday prices | Fraunhofer ISE Energy-Charts weekly JSON | None | Every 30 minutes |
 
 Detailed source decisions and endpoint contracts are in [`api/`](api/README.md).
 
@@ -69,6 +72,7 @@ The dashboard is honest about the capabilities of the selected free sources:
 - The 60-minute values aggregate quarter-hour delivery prices; they are not trade-by-trade OHLC values.
 - Grid-time deviation is an internal frequency-integral approximation, not an official live grid-time API measurement.
 - True continuous intraday Current/High/Low/Last requires a licensed EPEX/EEX feed or another approved trade-data provider.
+- The client-approved Fraunhofer test feed provides delayed Average/Low/High/ID1/ID3 data, not Last. Its dashboard labels reflect that distinction.
 
 See [`api/api_limitations_and_decisions.md`](api/api_limitations_and_decisions.md) for the full rationale.
 
@@ -107,6 +111,7 @@ No n8n community nodes are required.
 | Grafana PostgreSQL datasource credential | Grafana | Use a dedicated read-only database user in production |
 | SMARD API key | Not required | The selected endpoint is public |
 | `netzfrequenzmessung.de` API key | Not required | The selected endpoint is public |
+| Fraunhofer Energy-Charts API key | Not required for the provisional public weekly JSON files | Confirm commercial/display rights before production use |
 
 Never commit real passwords or tokens. [`.env.example`](.env.example) contains placeholders only.
 
@@ -123,6 +128,7 @@ Apply these scripts to the same PostgreSQL database in this exact order:
 3. [`database/003_create_views.sql`](database/003_create_views.sql)
 4. [`database/005_align_client_api_sources.sql`](database/005_align_client_api_sources.sql)
 5. [`database/006_add_epex_spot_web.sql`](database/006_add_epex_spot_web.sql)
+6. [`database/007_add_energy_charts_intraday.sql`](database/007_add_energy_charts_intraday.sql)
 
 The scripts are idempotent and can be applied again when necessary.
 
@@ -156,6 +162,7 @@ Import and manually test the workflows in this order:
 5. [`workflows/04_market_price_ohlc_builder.json`](workflows/04_market_price_ohlc_builder.json)
 6. [`workflows/05_ingestion_health_monitor.json`](workflows/05_ingestion_health_monitor.json)
 7. [`workflows/06_epex_spot_intraday_web_de.json`](workflows/06_epex_spot_intraday_web_de.json)
+8. [`workflows/07_market_prices_energy_charts_intraday_de_lu.json`](workflows/07_market_prices_energy_charts_intraday_de_lu.json)
 
 Keep each workflow inactive until its manual execution succeeds. Activate it only after confirming the expected PostgreSQL rows.
 
@@ -171,6 +178,7 @@ select *
 from energy_data.v_grafana_market_price_stats_today
 order by source_code, interval_type;
 select * from energy_data.v_ingestion_health;
+select * from energy_data.v_grafana_energy_charts_intraday_latest;
 select *
 from energy_data.ingestion_alerts
 where resolved_at is null;
@@ -181,6 +189,10 @@ where resolved_at is null;
 The ready-to-import file is:
 
 [`grafana/dashboards/germany-energy-monitoring.json`](grafana/dashboards/germany-energy-monitoring.json)
+
+For the client-approved Fraunhofer test run, import
+[`grafana/dashboards/germany-energy-monitoring-fraunhofer.json`](grafana/dashboards/germany-energy-monitoring-fraunhofer.json).
+It uses delayed High/Low/Average values and contains no unsupported template variable.
 
 In Grafana:
 
@@ -214,6 +226,7 @@ node .\scripts\validate_grafana_dashboard.js
 | `market_price_ohlc_builder` | 2 | Build separate 15/60-minute aggregates for each source |
 | `ingestion_health_monitor` | 2 | Insert, refresh, and resolve stale-data alerts |
 | `epex_spot_intraday_web_de` | 8 | Validate and store EPEX IDA1 auction and continuous 15/60-minute results |
+| `market_prices_energy_charts_intraday_de_lu` | 8 | Store provisional Fraunhofer 15/60-minute Average/Low/High/ID1/ID3 data |
 
 Two-node workflows are intentional when PostgreSQL performs the calculation atomically in one SQL statement.
 

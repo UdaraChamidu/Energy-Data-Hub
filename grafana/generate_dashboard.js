@@ -21,6 +21,11 @@ const compactExternalOutputPath = path.join(
   'dashboards',
   'germany-energy-monitoring-compact-external.json',
 );
+const fraunhoferOutputPath = path.join(
+  __dirname,
+  'dashboards',
+  'germany-energy-monitoring-fraunhofer.json',
+);
 
 const datasource = {
   type: 'grafana-postgresql-datasource',
@@ -1034,3 +1039,116 @@ fs.writeFileSync(
 console.log(
   `Generated ${path.relative(process.cwd(), compactExternalOutputPath)}`,
 );
+
+const energyChartsCurrentSql = `SELECT
+  average_price_eur_mwh AS "Latest Average"
+FROM energy_data.v_grafana_energy_charts_intraday_latest
+WHERE country_code = 'DE'
+  AND interval_type = '15m'
+LIMIT 1;`;
+
+function energyChartsChartSql(intervalType) {
+  return `SELECT
+  "time",
+  high_price_eur_mwh AS "High",
+  low_price_eur_mwh AS "Low",
+  average_price_eur_mwh AS "Average"
+FROM energy_data.v_grafana_energy_charts_intraday
+WHERE $__timeFilter("time")
+  AND country_code = 'DE'
+  AND interval_type = '${intervalType}'
+ORDER BY "time";`;
+}
+
+function energyChartsLatestSql(intervalType) {
+  return `SELECT
+  high_price_eur_mwh AS "High",
+  low_price_eur_mwh AS "Low",
+  average_price_eur_mwh AS "Average"
+FROM energy_data.v_grafana_energy_charts_intraday_latest
+WHERE country_code = 'DE'
+  AND interval_type = '${intervalType}'
+LIMIT 1;`;
+}
+
+function energyChartsRecordSql(intervalType, column, alias) {
+  return `SELECT
+  ${column} AS "${alias}"
+FROM energy_data.v_grafana_energy_charts_intraday_stats_latest_day
+WHERE country_code = 'DE'
+  AND interval_type = '${intervalType}'
+LIMIT 1;`;
+}
+
+const fraunhoferDashboard = JSON.parse(JSON.stringify(compactDashboard));
+fraunhoferDashboard.title = 'Germany Energy Monitoring - Fraunhofer Test';
+fraunhoferDashboard.uid = 'energy-data-hub-de-fraunhofer';
+fraunhoferDashboard.version = 1;
+fraunhoferDashboard.templating = { list: [] };
+fraunhoferDashboard.time = { from: 'now-24h', to: 'now' };
+fraunhoferDashboard.description =
+  'Germany test dashboard using delayed Fraunhofer Energy-Charts continuous intraday Average, High, Low, ID1 and ID3 data. Average is not Last.';
+fraunhoferDashboard.tags = [...fraunhoferDashboard.tags, 'fraunhofer', 'provisional'];
+
+const fraunhoferPanelChanges = {
+  106: {
+    title: 'Latest Published Intraday Average',
+    description:
+      'Latest Fraunhofer 15-minute continuous intraday average. This provisional source is delayed.',
+    rawSql: energyChartsCurrentSql,
+  },
+  107: {
+    title: '15-Minute Price (Latest Published)',
+    description: 'Latest published 15-minute High, Low and Average values.',
+    rawSql: energyChartsLatestSql('15m'),
+  },
+  108: {
+    title: '60-Minute Price (Latest Published)',
+    description: 'Latest published hourly High, Low and Average values.',
+    rawSql: energyChartsLatestSql('60m'),
+  },
+  112: {
+    title: '15-Minute Price - High / Low / Average',
+    description: 'Delayed Fraunhofer 15-minute continuous intraday step lines.',
+    rawSql: energyChartsChartSql('15m'),
+  },
+  113: {
+    title: '60-Minute Price - High / Low / Average',
+    description: 'Delayed Fraunhofer hourly continuous intraday step lines.',
+    rawSql: energyChartsChartSql('60m'),
+  },
+  115: {
+    title: '15-Minute Low - Latest Day',
+    rawSql: energyChartsRecordSql('15m', 'low_price_eur_mwh', '15-Minute Low'),
+  },
+  116: {
+    title: '15-Minute High - Latest Day',
+    rawSql: energyChartsRecordSql('15m', 'high_price_eur_mwh', '15-Minute High'),
+  },
+  117: {
+    title: '60-Minute Low - Latest Day',
+    rawSql: energyChartsRecordSql('60m', 'low_price_eur_mwh', '60-Minute Low'),
+  },
+  118: {
+    title: '60-Minute High - Latest Day',
+    rawSql: energyChartsRecordSql('60m', 'high_price_eur_mwh', '60-Minute High'),
+  },
+};
+
+for (const panel of fraunhoferDashboard.panels) {
+  const change = fraunhoferPanelChanges[panel.id];
+  if (!change) continue;
+  panel.title = change.title;
+  if (change.description) panel.description = change.description;
+  if (panel.targets?.[0]) panel.targets[0].rawSql = change.rawSql;
+  for (const override of panel.fieldConfig?.overrides ?? []) {
+    if (override.matcher?.options === 'Last') override.matcher.options = 'Average';
+  }
+}
+
+fs.writeFileSync(
+  fraunhoferOutputPath,
+  `${JSON.stringify(fraunhoferDashboard, null, 2)}\n`,
+  'utf8',
+);
+console.log(`Generated ${path.relative(process.cwd(), fraunhoferOutputPath)}`);

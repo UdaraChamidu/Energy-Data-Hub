@@ -20,6 +20,13 @@ partial or incorrectly selected EPEX pages from entering PostgreSQL.
 
 This folder contains starter n8n workflows for the Germany-first ingestion phase.
 
+## Fraunhofer Energy-Charts provisional intraday feed
+
+`07_market_prices_energy_charts_intraday_de_lu.json` is the client-approved
+temporary collector. It makes two public requests every 30 minutes and stores
+15-minute and 60-minute Average, Low, High, ID1 and ID3 values. It does not
+manufacture a Last value. Run database migration `007` before testing it.
+
 ## Import Order
 
 1. `01_grid_frequency_netzfrequenzmessung_de.json`
@@ -28,6 +35,10 @@ This folder contains starter n8n workflows for the Germany-first ingestion phase
 4. `03a_market_prices_smard_de_lu.json`
 5. `04_market_price_ohlc_builder.json`
 6. `05_ingestion_health_monitor.json`
+7. `07_market_prices_energy_charts_intraday_de_lu.json`
+
+Keep `06_epex_spot_intraday_web_de.json` inactive while direct EPEX continuous
+requests remain unreliable.
 
 ## Before Activating
 

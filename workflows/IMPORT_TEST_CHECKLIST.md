@@ -9,6 +9,7 @@ Keep every workflow inactive until its manual test passes.
 - Apply `database/003_create_views.sql`.
 - Apply `database/005_align_client_api_sources.sql`.
 - Apply `database/006_add_epex_spot_web.sql`.
+- Apply `database/007_add_energy_charts_intraday.sql`.
 - Configure `ENTSOE_SECURITY_TOKEN` in the n8n runtime.
 - Create one n8n PostgreSQL credential with SSL mode matching the client database.
 - Assign that credential to every PostgreSQL node after import.
@@ -38,6 +39,11 @@ Keep every workflow inactive until its manual test passes.
    - Run it manually and confirm both terminal Postgres nodes succeed.
    - On a normal day, confirm 96 auction rows, 96 continuous 15-minute rows and 24 continuous hourly rows.
    - Do not activate it if EPEX returns HTTP 202, an empty page, the wrong table or a row-count validation error.
+8. `07_market_prices_energy_charts_intraday_de_lu.json`
+   - Assign the PostgreSQL credential to both Store Fraunhofer nodes.
+   - Confirm both HTTP and parser branches succeed.
+   - The current live contract returns 96 published 15-minute rows and 24 published hourly rows.
+   - Confirm records are stored with source `energy_charts`; then activate the workflow.
 
 ## Verification Queries
 
@@ -46,6 +52,8 @@ select * from energy_data.v_grid_frequency_latest;
 select * from energy_data.v_grid_time_deviation_latest;
 select * from energy_data.v_grafana_current_market_price;
 select * from energy_data.v_grafana_market_price_stats_today order by source_code, interval_type;
+select * from energy_data.v_grafana_energy_charts_intraday_latest;
+select * from energy_data.v_grafana_energy_charts_intraday_stats_latest_day;
 select * from energy_data.v_ingestion_health;
 select * from energy_data.ingestion_alerts where resolved_at is null;
 ```

@@ -26,6 +26,12 @@ const compactExternalDashboardPath = path.join(
   'dashboards',
   'germany-energy-monitoring-compact-external.json',
 );
+const fraunhoferDashboardPath = path.join(
+  projectRoot,
+  'grafana',
+  'dashboards',
+  'germany-energy-monitoring-fraunhofer.json',
+);
 
 const requiredPanelTitles = [
   'Grid Frequency - Target vs Actual',
@@ -361,6 +367,54 @@ validateCompactDashboard(compactExternalDashboardPath, {
   external: true,
   otherUids: [dashboard.uid, compactDashboard.uid],
 });
+
+if (!fs.existsSync(fraunhoferDashboardPath)) {
+  fail(`missing ${path.relative(projectRoot, fraunhoferDashboardPath)}`);
+} else {
+  const fraunhofer = JSON.parse(fs.readFileSync(fraunhoferDashboardPath, 'utf8'));
+  const fraunhoferPanels = fraunhofer.panels ?? [];
+  const fraunhoferSql = fraunhoferPanels
+    .flatMap((panel) => panel.targets ?? [])
+    .map((target) => target.rawSql ?? '')
+    .join('\n');
+  if ([dashboard.uid, compactDashboard.uid].includes(fraunhofer.uid)) {
+    fail('Fraunhofer dashboard must have a separate UID');
+  }
+  if ((fraunhofer.templating?.list ?? []).length !== 0) {
+    fail('Fraunhofer dashboard must not use a price-source template variable');
+  }
+  for (const objectName of [
+    'energy_data.v_grafana_energy_charts_intraday',
+    'energy_data.v_grafana_energy_charts_intraday_latest',
+    'energy_data.v_grafana_energy_charts_intraday_stats_latest_day',
+  ]) {
+    if (!fraunhoferSql.includes(objectName)) {
+      fail(`Fraunhofer dashboard does not reference ${objectName}`);
+    }
+  }
+  if (/AS "Last"|High \/ Low \/ Last/.test(fraunhoferSql + fraunhoferPanels.map((p) => p.title).join('\n'))) {
+    fail('Fraunhofer dashboard must not label Average as Last');
+  }
+  for (const title of [
+    '15-Minute Price - High / Low / Average',
+    '60-Minute Price - High / Low / Average',
+  ]) {
+    const panel = fraunhoferPanels.find((candidate) => candidate.title === title);
+    if (panel?.fieldConfig?.defaults?.custom?.lineInterpolation !== 'stepAfter') {
+      fail(`Fraunhofer ${title} must use step-after interpolation`);
+    }
+    if (panel?.fieldConfig?.defaults?.custom?.fillOpacity !== 0) {
+      fail(`Fraunhofer ${title} must use lines without fill`);
+    }
+    const average = panel?.fieldConfig?.overrides?.find(
+      (override) => override.matcher?.options === 'Average',
+    );
+    const averageColor = average?.properties?.find((property) => property.id === 'color');
+    if (averageColor?.value?.fixedColor !== '#3274D9') {
+      fail(`Fraunhofer ${title} must color Average blue`);
+    }
+  }
+}
 
 if (!process.exitCode) {
   console.log(
