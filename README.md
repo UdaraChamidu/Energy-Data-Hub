@@ -12,7 +12,7 @@ ENTSO-E Transparency ------+--> n8n --> PostgreSQL --> Grafana
 SMARD.de ------------------+
                            |
 Fraunhofer Energy-Charts --+
-```
+``` 
 
 ## Current Status
 
