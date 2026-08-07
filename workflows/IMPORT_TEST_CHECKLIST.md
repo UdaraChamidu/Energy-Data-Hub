@@ -10,6 +10,7 @@ Keep every workflow inactive until its manual test passes.
 - Apply `database/005_align_client_api_sources.sql`.
 - Apply `database/006_add_epex_spot_web.sql`.
 - Apply `database/007_add_energy_charts_intraday.sql`.
+- Apply `database/008_extend_epex_complete_market_results.sql`.
 - Configure `ENTSOE_SECURITY_TOKEN` in the n8n runtime.
 - Create one n8n PostgreSQL credential with SSL mode matching the client database.
 - Assign that credential to every PostgreSQL node after import.
@@ -44,6 +45,12 @@ Keep every workflow inactive until its manual test passes.
    - Confirm both HTTP and parser branches succeed.
    - The current live contract returns 96 published 15-minute rows and 24 published hourly rows.
    - Confirm records are stored with source `energy_charts`; then activate the workflow.
+9. `08_epex_complete_market_results_de.json`
+   - Assign the PostgreSQL credential to `Store Validated EPEX Result`.
+   - Keep workflow `06` inactive; workflow `08` is its separate complete-product test.
+   - Execute workflow `08` manually. A manual execution requests MRC, IDA1, IDA2, IDA3, Continuous 15-minute, and Continuous 60-minute.
+   - Confirm six successful PostgreSQL outputs and coverage rows for all six products.
+   - If any request is blocked, returns the wrong table, or fails row-count validation, keep workflow `08` inactive and continue using Fraunhofer workflow `07`.
 
 ## Verification Queries
 
@@ -54,6 +61,7 @@ select * from energy_data.v_grafana_current_market_price;
 select * from energy_data.v_grafana_market_price_stats_today order by source_code, interval_type;
 select * from energy_data.v_grafana_energy_charts_intraday_latest;
 select * from energy_data.v_grafana_energy_charts_intraday_stats_latest_day;
+select * from energy_data.v_epex_complete_coverage order by product_name;
 select * from energy_data.v_ingestion_health;
 select * from energy_data.ingestion_alerts where resolved_at is null;
 ```

@@ -259,6 +259,120 @@ function validateEpexParsers(workflows) {
   console.log('PASS: EPEX auction and continuous parser samples');
 }
 
+function validateEpexCompleteWorkflow(workflows) {
+  const entry = workflows.find(
+    ({ file }) => file === '08_epex_complete_market_results_de.json',
+  );
+  if (!entry?.workflow) {
+    fail('EPEX complete workflow is unavailable');
+    return;
+  }
+  if (entry.workflow.active !== false) {
+    fail('EPEX complete workflow must be imported inactive');
+  }
+
+  const buildNode = entry.workflow.nodes.find(
+    (node) => node.name === 'Build EPEX Complete Requests',
+  );
+  const parseNode = entry.workflow.nodes.find(
+    (node) => node.name === 'Validate and Parse EPEX Result',
+  );
+  if (!buildNode || !parseNode) {
+    fail('EPEX complete builder or parser is missing');
+    return;
+  }
+
+  const manualRequests = new Function(
+    '$json',
+    '$execution',
+    buildNode.parameters.jsCode,
+  )({}, { mode: 'manual' });
+  const keys = manualRequests.map((item) => item.json.key).sort();
+  const expectedKeys = [
+    'CONTINUOUS_15MIN',
+    'CONTINUOUS_60MIN',
+    'IDA1',
+    'IDA2',
+    'IDA3',
+    'MRC',
+  ].sort();
+  if (JSON.stringify(keys) !== JSON.stringify(expectedKeys)) {
+    fail(`EPEX complete manual run does not build all six products: ${keys.join(', ')}`);
+  }
+
+  const padding = `<!-- ${'x'.repeat(10000)} -->`;
+  const auctionRows = Array.from(
+    { length: 96 },
+    () => '<tr class="child"><td>10</td><td>11</td><td>10.5</td><td>50.25</td></tr>',
+  ).join('');
+  const auctionHtml =
+    `${padding}<div class="js-table-values"><table data-head="06.08.26"><tbody>` +
+    `${auctionRows}</tbody></table></div>`;
+
+  for (const auctionCode of ['MRC', 'IDA1', 'IDA2', 'IDA3']) {
+    const result = new Function('$json', parseNode.parameters.jsCode)({
+      key: auctionCode,
+      kind: 'auction',
+      auction_code: auctionCode,
+      market_area: 'DE-LU',
+      trading_date: '2026-08-05',
+      delivery_date: '2026-08-06',
+      product_minutes: 15,
+      request_url: `https://example.invalid/${auctionCode}`,
+      data: auctionHtml,
+    })[0].json;
+    if (
+      result.records_valid !== 96 ||
+      !result.sql.includes('epex_intraday_auction_results') ||
+      !result.sql.includes(`'${auctionCode}'`)
+    ) {
+      fail(`EPEX complete ${auctionCode} parser sample failed`);
+    }
+  }
+
+  const continuousRows = [];
+  for (let hour = 0; hour < 24; hour += 1) {
+    continuousRows.push(
+      `<tr class="child-${hour}"><td>-10</td><td>100</td><td>50</td></tr>`,
+    );
+    for (let quarter = 0; quarter < 4; quarter += 1) {
+      continuousRows.push(
+        `<tr class="child-${hour} lvl-2"><td>-5</td><td>90</td><td>45</td></tr>`,
+      );
+    }
+  }
+  const continuousHtml =
+    `${padding}<div class="js-table-values"><table data-head="06.08.26">` +
+    '<thead><tr><th>Weight Avg.</th></tr></thead><tbody>' +
+    `${continuousRows.join('')}</tbody></table></div>`;
+
+  for (const [key, minutes, expected] of [
+    ['CONTINUOUS_15MIN', 15, 96],
+    ['CONTINUOUS_60MIN', 60, 24],
+  ]) {
+    const result = new Function('$json', parseNode.parameters.jsCode)({
+      key,
+      kind: 'continuous',
+      auction_code: null,
+      market_area: 'DE',
+      trading_date: null,
+      delivery_date: '2026-08-06',
+      product_minutes: minutes,
+      request_url: `https://example.invalid/${key}`,
+      data: continuousHtml,
+    })[0].json;
+    if (
+      result.records_valid !== expected ||
+      !result.sql.includes('epex_public_market_results_complete') ||
+      !result.sql.includes('market_price_ohlc')
+    ) {
+      fail(`EPEX complete ${key} parser sample failed`);
+    }
+  }
+
+  console.log('PASS: EPEX complete six-product workflow samples');
+}
+
 function energyChartsSample(intervalType) {
   const prefix = intervalType === '15m'
     ? 'Intraday Continuous 15 minutes '
@@ -381,6 +495,7 @@ async function main() {
   validateSmardNullHandling(workflows);
   validateEntsoeParser(workflows);
   validateEpexParsers(workflows);
+  validateEpexCompleteWorkflow(workflows);
   validateEnergyChartsParsers(workflows);
 
   if (process.argv.includes('--live-energy-charts')) {

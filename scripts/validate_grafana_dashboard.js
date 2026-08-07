@@ -32,6 +32,12 @@ const fraunhoferDashboardPath = path.join(
   'dashboards',
   'germany-energy-monitoring-fraunhofer.json',
 );
+const epexCompleteDashboardPath = path.join(
+  projectRoot,
+  'grafana',
+  'dashboards',
+  'germany-energy-monitoring-epex-complete.json',
+);
 
 const requiredPanelTitles = [
   'Grid Frequency - Target vs Actual',
@@ -412,6 +418,53 @@ if (!fs.existsSync(fraunhoferDashboardPath)) {
     const averageColor = average?.properties?.find((property) => property.id === 'color');
     if (averageColor?.value?.fixedColor !== '#3274D9') {
       fail(`Fraunhofer ${title} must color Average blue`);
+    }
+  }
+}
+
+if (!fs.existsSync(epexCompleteDashboardPath)) {
+  fail(`missing ${path.relative(projectRoot, epexCompleteDashboardPath)}`);
+} else {
+  const epex = JSON.parse(fs.readFileSync(epexCompleteDashboardPath, 'utf8'));
+  const epexPanels = (epex.panels ?? []).filter((panel) => panel.type === 'timeseries');
+  const epexSql = epexPanels
+    .flatMap((panel) => panel.targets ?? [])
+    .map((target) => target.rawSql ?? '')
+    .join('\n');
+  const expectedTitles = [
+    'Grid Frequency - Target vs Actual',
+    'Grid Time Deviation',
+    'EPEX Day-Ahead MRC',
+    'EPEX Intraday Auction IDA1',
+    'EPEX Intraday Auction IDA2',
+    'EPEX Intraday Auction IDA3',
+    'EPEX Continuous Intraday - 15 Minute High / Low / Last',
+    'EPEX Continuous Intraday - 60 Minute High / Low / Last',
+  ];
+  if (epex.graphTooltip !== 1) fail('EPEX complete dashboard must use shared crosshair');
+  if (epex.time?.to !== 'now+24h') fail('EPEX complete dashboard must show future delivery time');
+  if ((epex.templating?.list ?? []).length !== 0) {
+    fail('EPEX complete dashboard must not use template variables');
+  }
+  for (const title of expectedTitles) {
+    const panel = epexPanels.find((candidate) => candidate.title === title);
+    if (!panel) {
+      fail(`EPEX complete dashboard panel is missing: ${title}`);
+      continue;
+    }
+    if (panel.gridPos?.x !== 0 || panel.gridPos?.w !== 24) {
+      fail(`EPEX complete ${title} must be full width`);
+    }
+    if (panel.fieldConfig?.defaults?.custom?.axisWidth !== 90) {
+      fail(`EPEX complete ${title} must use the shared fixed axis width`);
+    }
+  }
+  for (const objectName of [
+    'energy_data.v_grafana_epex_auction_results',
+    'energy_data.v_grafana_epex_continuous_results',
+  ]) {
+    if (!epexSql.includes(objectName)) {
+      fail(`EPEX complete dashboard does not reference ${objectName}`);
     }
   }
 }

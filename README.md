@@ -2,7 +2,7 @@
 
 Germany-first electricity-grid and market-data pipeline for the client's Grafana monitoring system.
 
-The project replaces fragile webpage scraping with scheduled n8n collectors, PostgreSQL storage, and a Grafana dashboard that reads only from PostgreSQL.
+The project prefers structured APIs and uses scheduled n8n collectors, PostgreSQL storage, and Grafana dashboards that read only from PostgreSQL. A fail-closed EPEX public-results collector is included for normal-access testing only.
 
 ```text
 netzfrequenzmessung.de ----+
@@ -20,7 +20,7 @@ Fraunhofer Energy-Charts --+
 | --- | --- |
 | Germany-first requirements and API selection | Complete |
 | PostgreSQL schema, seed data, indexes, and views | Created by the operator |
-| Eight importable n8n workflows | Implemented and locally validated; Fraunhofer live contract passing; EPEX kept inactive |
+| Nine importable n8n workflows | Implemented and locally validated; Fraunhofer live contract passing; EPEX workflows kept inactive |
 | Grafana PostgreSQL datasource | Connected by the operator |
 | Germany Grafana dashboard | Imported and reported working |
 | Automated workflow and dashboard validation | Passing |
@@ -59,6 +59,7 @@ All timestamps are stored as PostgreSQL `timestamptz`. Grafana displays them usi
 | 15/60-minute derived values | PostgreSQL aggregation of stored price points | None | Every 5 minutes |
 | Ingestion health | PostgreSQL health view | None | Every minute |
 | Provisional continuous intraday prices | Fraunhofer ISE Energy-Charts weekly JSON | None | Every 30 minutes |
+| Complete EPEX result test | Public EPEX result pages, normal requests only | None | Inactive until all six products pass |
 
 Detailed source decisions and endpoint contracts are in [`api/`](api/README.md).
 
@@ -129,6 +130,7 @@ Apply these scripts to the same PostgreSQL database in this exact order:
 4. [`database/005_align_client_api_sources.sql`](database/005_align_client_api_sources.sql)
 5. [`database/006_add_epex_spot_web.sql`](database/006_add_epex_spot_web.sql)
 6. [`database/007_add_energy_charts_intraday.sql`](database/007_add_energy_charts_intraday.sql)
+7. [`database/008_extend_epex_complete_market_results.sql`](database/008_extend_epex_complete_market_results.sql)
 
 The scripts are idempotent and can be applied again when necessary.
 
@@ -163,6 +165,7 @@ Import and manually test the workflows in this order:
 6. [`workflows/05_ingestion_health_monitor.json`](workflows/05_ingestion_health_monitor.json)
 7. [`workflows/06_epex_spot_intraday_web_de.json`](workflows/06_epex_spot_intraday_web_de.json)
 8. [`workflows/07_market_prices_energy_charts_intraday_de_lu.json`](workflows/07_market_prices_energy_charts_intraday_de_lu.json)
+9. [`workflows/08_epex_complete_market_results_de.json`](workflows/08_epex_complete_market_results_de.json)
 
 Keep each workflow inactive until its manual execution succeeds. Activate it only after confirming the expected PostgreSQL rows.
 
@@ -193,6 +196,12 @@ The ready-to-import file is:
 For the client-approved Fraunhofer test run, import
 [`grafana/dashboards/germany-energy-monitoring-fraunhofer.json`](grafana/dashboards/germany-energy-monitoring-fraunhofer.json).
 It uses delayed High/Low/Average values and contains no unsupported template variable.
+
+For Werner's aligned EPEX specification, import
+[`grafana/dashboards/germany-energy-monitoring-epex-complete.json`](grafana/dashboards/germany-energy-monitoring-epex-complete.json).
+It has a separate UID, stacks all eight time-series panels at full width, and
+uses `now-24h` through `now+24h` so tomorrow's delivery prices can be displayed.
+Its EPEX panels remain empty until workflow `08` successfully stores data.
 
 In Grafana:
 

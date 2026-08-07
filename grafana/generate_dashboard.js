@@ -26,6 +26,11 @@ const fraunhoferOutputPath = path.join(
   'dashboards',
   'germany-energy-monitoring-fraunhofer.json',
 );
+const epexCompleteOutputPath = path.join(
+  __dirname,
+  'dashboards',
+  'germany-energy-monitoring-epex-complete.json',
+);
 
 const datasource = {
   type: 'grafana-postgresql-datasource',
@@ -64,6 +69,7 @@ function timeSeriesPanel({
   decimals,
   lineInterpolation = 'linear',
   fillOpacity = 8,
+  axisWidth,
   overrides = [],
 }) {
   return {
@@ -78,6 +84,7 @@ function timeSeriesPanel({
           axisColorMode: 'text',
           axisLabel: '',
           axisPlacement: 'auto',
+          ...(axisWidth ? { axisWidth } : {}),
           barAlignment: 0,
           drawStyle: 'line',
           fillOpacity,
@@ -1152,3 +1159,146 @@ fs.writeFileSync(
   'utf8',
 );
 console.log(`Generated ${path.relative(process.cwd(), fraunhoferOutputPath)}`);
+
+function epexAuctionSql(auctionCode) {
+  return `SELECT
+  "time",
+  price_eur_mwh AS "Price"
+FROM energy_data.v_grafana_epex_auction_results
+WHERE $__timeFilter("time")
+  AND country_code = 'DE'
+  AND auction_code = '${auctionCode}'
+ORDER BY "time";`;
+}
+
+function epexContinuousSql(intervalType) {
+  return `SELECT
+  "time",
+  high_price_eur_mwh AS "High",
+  low_price_eur_mwh AS "Low",
+  last_price_eur_mwh AS "Last"
+FROM energy_data.v_grafana_epex_continuous_results
+WHERE $__timeFilter("time")
+  AND country_code = 'DE'
+  AND interval_type = '${intervalType}'
+ORDER BY "time";`;
+}
+
+const epexAuctionColorOverrides = [
+  {
+    matcher: { id: 'byName', options: 'Price' },
+    properties: [
+      { id: 'color', value: { fixedColor: '#3274D9', mode: 'fixed' } },
+    ],
+  },
+];
+
+const epexCompletePanels = [
+  rowPanel(201, 'Aligned Market Timeline', 0),
+  timeSeriesPanel({
+    id: 202,
+    title: 'Grid Frequency - Target vs Actual',
+    description: 'Measured grid frequency aligned to the common delivery timeline.',
+    gridPos: { h: 6, w: 24, x: 0, y: 1 },
+    rawSql: frequencySql,
+    unit: 'hertz',
+    decimals: 3,
+    axisWidth: 90,
+    overrides: [
+      {
+        matcher: { id: 'byName', options: 'Target Frequency' },
+        properties: [
+          { id: 'color', value: { fixedColor: 'green', mode: 'fixed' } },
+          { id: 'custom.lineStyle', value: { dash: [8, 6], fill: 'dash' } },
+          { id: 'custom.lineWidth', value: 1 },
+        ],
+      },
+    ],
+  }),
+  timeSeriesPanel({
+    id: 203,
+    title: 'Grid Time Deviation',
+    description: 'Calculated deviation with the required static zero target.',
+    gridPos: { h: 6, w: 24, x: 0, y: 7 },
+    rawSql: deviationSql,
+    unit: 's',
+    decimals: 3,
+    axisWidth: 90,
+    overrides: [
+      {
+        matcher: { id: 'byName', options: 'Target' },
+        properties: [
+          { id: 'color', value: { fixedColor: 'green', mode: 'fixed' } },
+          { id: 'custom.lineStyle', value: { dash: [8, 6], fill: 'dash' } },
+          { id: 'custom.lineWidth', value: 1 },
+          { id: 'custom.fillOpacity', value: 0 },
+        ],
+      },
+    ],
+  }),
+  ...[
+    ['MRC', 'EPEX Day-Ahead MRC'],
+    ['IDA1', 'EPEX Intraday Auction IDA1'],
+    ['IDA2', 'EPEX Intraday Auction IDA2'],
+    ['IDA3', 'EPEX Intraday Auction IDA3'],
+  ].map(([auctionCode, title], index) =>
+    timeSeriesPanel({
+      id: 204 + index,
+      title,
+      description: `${auctionCode} clearing price plotted by delivery interval.`,
+      gridPos: { h: 6, w: 24, x: 0, y: 13 + index * 6 },
+      rawSql: epexAuctionSql(auctionCode),
+      unit: 'suffix: EUR/MWh',
+      decimals: 2,
+      lineInterpolation: 'stepAfter',
+      fillOpacity: 0,
+      axisWidth: 90,
+      overrides: epexAuctionColorOverrides,
+    }),
+  ),
+  timeSeriesPanel({
+    id: 208,
+    title: 'EPEX Continuous Intraday - 15 Minute High / Low / Last',
+    description: 'Continuous 15-minute trading summary plotted by delivery interval.',
+    gridPos: { h: 6, w: 24, x: 0, y: 37 },
+    rawSql: epexContinuousSql('15m'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+    lineInterpolation: 'stepAfter',
+    fillOpacity: 0,
+    axisWidth: 90,
+    overrides: priceColorOverrides,
+  }),
+  timeSeriesPanel({
+    id: 209,
+    title: 'EPEX Continuous Intraday - 60 Minute High / Low / Last',
+    description: 'Continuous hourly trading summary plotted by delivery interval.',
+    gridPos: { h: 6, w: 24, x: 0, y: 43 },
+    rawSql: epexContinuousSql('60m'),
+    unit: 'suffix: EUR/MWh',
+    decimals: 2,
+    lineInterpolation: 'stepAfter',
+    fillOpacity: 0,
+    axisWidth: 90,
+    overrides: priceColorOverrides,
+  }),
+];
+
+const epexCompleteDashboard = JSON.parse(JSON.stringify(dashboard));
+epexCompleteDashboard.title = 'Germany Energy Monitoring - EPEX Complete';
+epexCompleteDashboard.uid = 'energy-data-hub-de-epex-complete';
+epexCompleteDashboard.version = 1;
+epexCompleteDashboard.description =
+  'Aligned EPEX Day-Ahead, IDA1, IDA2, IDA3 and continuous 15/60-minute delivery-time charts. Data remains empty until the inactive EPEX collector passes normal-access validation.';
+epexCompleteDashboard.tags = ['energy', 'germany', 'epex', 'aligned', 'test'];
+epexCompleteDashboard.graphTooltip = 1;
+epexCompleteDashboard.templating = { list: [] };
+epexCompleteDashboard.time = { from: 'now-24h', to: 'now+24h' };
+epexCompleteDashboard.panels = epexCompletePanels;
+
+fs.writeFileSync(
+  epexCompleteOutputPath,
+  `${JSON.stringify(epexCompleteDashboard, null, 2)}\n`,
+  'utf8',
+);
+console.log(`Generated ${path.relative(process.cwd(), epexCompleteOutputPath)}`);

@@ -1,0 +1,206 @@
+{
+  "name": "epex_complete_market_results_de",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "epex-complete-manual",
+      "name": "Manual Test - All Six Products",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "epex-complete-schedule",
+      "name": "Every 30 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function berlinDate(date) {\n  const parts = new Intl.DateTimeFormat('en-CA', {\n    timeZone: 'Europe/Berlin',\n    year: 'numeric',\n    month: '2-digit',\n    day: '2-digit',\n  }).formatToParts(date);\n  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));\n  return `${values.year}-${values.month}-${values.day}`;\n}\n\nfunction addDays(dateText, days) {\n  const [year, month, day] = dateText.split('-').map(Number);\n  return berlinDate(new Date(Date.UTC(year, month - 1, day + days, 12)));\n}\n\nconst now = new Date();\nconst today = berlinDate(now);\nconst tomorrow = addDays(today, 1);\nconst berlinHour = Number(\n  new Intl.DateTimeFormat('en-GB', {\n    timeZone: 'Europe/Berlin',\n    hour: '2-digit',\n    hourCycle: 'h23',\n  }).format(now),\n);\nconst executionMode = typeof $execution === 'undefined' ? 'manual' : $execution.mode;\nconst forceAll = executionMode === 'manual';\nconst base = 'https://www.epexspot.com/en/market-results';\n\nfunction request({ key, kind, auctionCode = null, tradingDate, deliveryDate, productMinutes }) {\n  const isAuction = kind === 'auction';\n  const query = [\n    `market_area=${isAuction ? 'DE-LU' : 'DE'}`,\n    `auction=${auctionCode ?? ''}`,\n    `trading_date=${tradingDate ?? ''}`,\n    `delivery_date=${deliveryDate}`,\n    'underlying_year=',\n    `modality=${isAuction ? 'Auction' : 'Continuous'}`,\n    `sub_modality=${isAuction ? (auctionCode === 'MRC' ? 'DayAhead' : 'Intraday') : ''}`,\n    'technology=',\n    'data_mode=table',\n    'period=',\n    'production_period=',\n    `product=${productMinutes}`,\n  ].join('&');\n  return {\n    json: {\n      key,\n      kind,\n      auction_code: auctionCode,\n      market_area: isAuction ? 'DE-LU' : 'DE',\n      trading_date: tradingDate,\n      delivery_date: deliveryDate,\n      product_minutes: productMinutes,\n      request_url: `${base}?${query}`,\n    },\n  };\n}\n\nconst requests = [\n  request({\n    key: 'CONTINUOUS_15MIN',\n    kind: 'continuous',\n    deliveryDate: today,\n    productMinutes: 15,\n  }),\n  request({\n    key: 'CONTINUOUS_60MIN',\n    kind: 'continuous',\n    deliveryDate: today,\n    productMinutes: 60,\n  }),\n];\n\nconst auctionWindows = [\n  { hour: 12, key: 'MRC', code: 'MRC', deliveryDate: tomorrow },\n  { hour: 15, key: 'IDA1', code: 'IDA1', deliveryDate: tomorrow },\n  { hour: 22, key: 'IDA2', code: 'IDA2', deliveryDate: tomorrow },\n  { hour: 10, key: 'IDA3', code: 'IDA3', deliveryDate: today },\n];\n\nfor (const auction of auctionWindows) {\n  if (!forceAll && berlinHour !== auction.hour) continue;\n  requests.push(\n    request({\n      key: auction.key,\n      kind: 'auction',\n      auctionCode: auction.code,\n      tradingDate: today,\n      deliveryDate: auction.deliveryDate,\n      productMinutes: 15,\n    }),\n  );\n}\n\nreturn requests;\n"
+      },
+      "id": "epex-complete-build",
+      "name": "Build EPEX Complete Requests",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.request_url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Energy-Data-Hub/1.0 (normal EPEX public-results request)"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en;q=0.9"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 45000
+        }
+      },
+      "id": "epex-complete-fetch",
+      "name": "Fetch EPEX Result Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        90
+      ],
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const request = $('Build EPEX Complete Requests').item.json;\nconst response = $json.data ?? $json.body ?? $json;\n\nreturn [{\n  json: {\n    ...request,\n    data: typeof response === 'string' ? response : JSON.stringify(response),\n  },\n}];\n"
+      },
+      "id": "epex-complete-attach",
+      "name": "Attach EPEX Request Metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const html = String($json.data ?? '');\nif (html.length < 10000 || !/js-table-values/i.test(html)) {\n  throw new Error(\n    `EPEX ${$json.key} response is empty, blocked or unexpected (${html.length} bytes).`,\n  );\n}\n\nfunction cleanText(value) {\n  return String(value)\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;|&#160;/gi, ' ')\n    .replace(/&minus;/gi, '-')\n    .replace(/&amp;/gi, '&')\n    .replace(/&#39;|&apos;/gi, \"'\")\n    .replace(/&quot;/gi, '\"')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction numberValue(value, label) {\n  const normalized = cleanText(value).replace(/,/g, '').replace(/\\s/g, '');\n  const parsed = Number(normalized);\n  if (!Number.isFinite(parsed)) {\n    throw new Error(`Invalid EPEX ${$json.key} ${label}: ${cleanText(value)}`);\n  }\n  return parsed;\n}\n\nfunction tableDate(value) {\n  const match = String(value).match(/^(\\d{2})\\.(\\d{2})\\.(\\d{2})$/);\n  if (!match) return null;\n  return `20${match[3]}-${match[2]}-${match[1]}`;\n}\n\nfunction sqlString(value) {\n  if (value === null || value === undefined) return 'null';\n  return `'${String(value).replace(/'/g, \"''\")}'`;\n}\n\nfunction sqlJson(value) {\n  return `${sqlString(JSON.stringify(value))}::jsonb`;\n}\n\nconst tables = [...html.matchAll(/<table\\s+data-head=\"([^\"]+)\"[^>]*>([\\s\\S]*?)<\\/table>/gi)]\n  .map((match) => ({ date: tableDate(match[1]), body: match[2] }))\n  .filter((table) => table.date === $json.delivery_date);\n\nif (tables.length === 0) {\n  throw new Error(\n    `EPEX ${$json.key} returned no table for delivery date ${$json.delivery_date}.`,\n  );\n}\n\nconst workflowName = 'epex_complete_market_results_de';\nlet rows = [];\n\nif ($json.kind === 'auction') {\n  const table = tables.find(\n    (candidate) => !/Weight\\s*Avg\\./i.test(candidate.body) && /class=\"[^\"]*child/i.test(candidate.body),\n  );\n  if (!table) {\n    throw new Error(`EPEX ${$json.key} auction table was not found.`);\n  }\n\n  const rowPattern = /<tr\\s+class=\"([^\"]*)\"[^>]*>([\\s\\S]*?)<\\/tr>/gi;\n  for (const match of table.body.matchAll(rowPattern)) {\n    const classes = match[1].trim().split(/\\s+/);\n    if (!classes.includes('child')) continue;\n    const cells = [...match[2].matchAll(/<td[^>]*>([\\s\\S]*?)<\\/td>/gi)];\n    if (cells.length < 4) continue;\n    rows.push({\n      delivery_date: $json.delivery_date,\n      position: rows.length,\n      buy_volume_mwh: numberValue(cells[0][1], 'buy volume'),\n      sell_volume_mwh: numberValue(cells[1][1], 'sell volume'),\n      volume_mwh: numberValue(cells[2][1], 'volume'),\n      price_eur_mwh: numberValue(cells[3][1], 'auction price'),\n    });\n  }\n\n  if (![92, 96, 100].includes(rows.length)) {\n    throw new Error(\n      `Expected 92, 96 or 100 EPEX ${$json.key} rows, received ${rows.length}.`,\n    );\n  }\n} else if ($json.kind === 'continuous') {\n  const table = tables.find(\n    (candidate) => /Weight\\s*Avg\\./i.test(candidate.body) && /class=\"child-\\d+/i.test(candidate.body),\n  );\n  if (!table) {\n    throw new Error(\n      `EPEX ${$json.key} returned an auction/default table instead of continuous results.`,\n    );\n  }\n\n  const rowPattern = /<tr\\s+class=\"([^\"]*)\"[^>]*>([\\s\\S]*?)<\\/tr>/gi;\n  for (const match of table.body.matchAll(rowPattern)) {\n    const classes = match[1].trim().split(/\\s+/);\n    const hasProductClass = classes.some((name) => /^child-\\d+$/.test(name));\n    if (!hasProductClass) continue;\n    const isQuarterHour = classes.includes('lvl-2');\n    const isHourly = !classes.includes('lvl-1') && !classes.includes('lvl-2');\n    if (\n      ($json.product_minutes === 15 && !isQuarterHour) ||\n      ($json.product_minutes === 60 && !isHourly)\n    ) {\n      continue;\n    }\n    const cells = [...match[2].matchAll(/<td[^>]*>([\\s\\S]*?)<\\/td>/gi)];\n    if (cells.length < 3) continue;\n    const row = {\n      delivery_date: $json.delivery_date,\n      interval_type: $json.product_minutes === 15 ? '15m' : '60m',\n      position: rows.length,\n      low_price_eur_mwh: numberValue(cells[0][1], 'Low'),\n      high_price_eur_mwh: numberValue(cells[1][1], 'High'),\n      last_price_eur_mwh: numberValue(cells[2][1], 'Last'),\n    };\n    if (\n      row.high_price_eur_mwh < row.low_price_eur_mwh ||\n      row.last_price_eur_mwh < row.low_price_eur_mwh ||\n      row.last_price_eur_mwh > row.high_price_eur_mwh\n    ) {\n      throw new Error(`Invalid EPEX ${$json.key} price bounds at position ${row.position}.`);\n    }\n    rows.push(row);\n  }\n\n  const expectedCounts = $json.product_minutes === 15 ? [92, 96, 100] : [23, 24, 25];\n  if (!expectedCounts.includes(rows.length)) {\n    throw new Error(\n      `Expected ${expectedCounts.join(', ')} EPEX ${$json.key} rows, received ${rows.length}.`,\n    );\n  }\n} else {\n  throw new Error(`Unsupported EPEX request kind: ${$json.kind}`);\n}\n\nconst payload = {\n  key: $json.key,\n  kind: $json.kind,\n  auction_code: $json.auction_code,\n  market_area: $json.market_area,\n  trading_date: $json.trading_date,\n  delivery_date: $json.delivery_date,\n  product_minutes: $json.product_minutes,\n  row_count: rows.length,\n  rows,\n};\n\nconst commonCtes = `with source_market as (\n  select s.id as source_id, m.id as market_id\n  from energy_data.data_sources s\n  cross join energy_data.markets m\n  where s.code = 'epex_spot_web'\n    and m.country_code = 'DE'\n    and m.bidding_zone = 'DE-LU'\n), required_source_market as (\n  select\n    (select source_id from source_market) as source_id,\n    (select market_id from source_market) as market_id\n), raw_payload as (\n  insert into energy_data.raw_api_payloads (\n    source_id, workflow_name, request_url, request_hash, response_status, payload\n  )\n  select\n    source_id,\n    ${sqlString(workflowName)},\n    ${sqlString($json.request_url)},\n    md5(${sqlString(JSON.stringify(payload))}),\n    200,\n    ${sqlJson(payload)}\n  from required_source_market\n  returning id\n)`;\n\nlet sql;\nif ($json.kind === 'auction') {\n  sql = `${commonCtes}, input_rows as (\n  select *\n  from jsonb_to_recordset(${sqlJson(rows)}) as x(\n    delivery_date date,\n    position integer,\n    buy_volume_mwh numeric,\n    sell_volume_mwh numeric,\n    volume_mwh numeric,\n    price_eur_mwh numeric\n  )\n), normalized as (\n  select\n    i.*,\n    (i.delivery_date::timestamp at time zone 'Europe/Berlin')\n      + make_interval(mins => i.position * ${Number($json.product_minutes)}) as delivery_start\n  from input_rows i\n), upserted as (\n  insert into energy_data.epex_intraday_auction_results (\n    source_id, market_id, auction_code, trading_date, product_minutes, market_area,\n    delivery_start, delivery_end, buy_volume_mwh, sell_volume_mwh, volume_mwh,\n    price_eur_mwh, source_published_at, raw_payload_id\n  )\n  select\n    sm.source_id, sm.market_id, ${sqlString($json.auction_code)},\n    ${sqlString($json.trading_date)}::date, ${Number($json.product_minutes)},\n    ${sqlString($json.market_area)}, n.delivery_start,\n    n.delivery_start + make_interval(mins => ${Number($json.product_minutes)}),\n    n.buy_volume_mwh, n.sell_volume_mwh, n.volume_mwh, n.price_eur_mwh, now(), rp.id\n  from normalized n\n  cross join required_source_market sm\n  cross join raw_payload rp\n  on conflict (source_id, market_id, auction_code, delivery_start, delivery_end)\n  do update set\n    trading_date = excluded.trading_date,\n    product_minutes = excluded.product_minutes,\n    market_area = excluded.market_area,\n    buy_volume_mwh = excluded.buy_volume_mwh,\n    sell_volume_mwh = excluded.sell_volume_mwh,\n    volume_mwh = excluded.volume_mwh,\n    price_eur_mwh = excluded.price_eur_mwh,\n    raw_payload_id = excluded.raw_payload_id,\n    ingested_at = now()\n  returning 1\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name, source_id, finished_at, status, records_read, records_written, metadata\n)\nselect ${sqlString(workflowName)}, sm.source_id, now(), 'success', ${rows.length},\n  count(*)::integer, ${sqlJson({ key: $json.key, delivery_date: $json.delivery_date })}\nfrom required_source_market sm\ncross join upserted\ngroup by sm.source_id\nreturning status, records_read, records_written;`;\n} else {\n  const intervalType = $json.product_minutes === 15 ? '15m' : '60m';\n  sql = `${commonCtes}, input_rows as (\n  select *\n  from jsonb_to_recordset(${sqlJson(rows)}) as x(\n    delivery_date date,\n    interval_type text,\n    position integer,\n    low_price_eur_mwh numeric,\n    high_price_eur_mwh numeric,\n    last_price_eur_mwh numeric\n  )\n), normalized as (\n  select\n    i.*,\n    (i.delivery_date::timestamp at time zone 'Europe/Berlin')\n      + make_interval(mins => i.position * ${Number($json.product_minutes)}) as interval_start\n  from input_rows i\n), upserted_ohlc as (\n  insert into energy_data.market_price_ohlc (\n    source_id, market_id, interval_type, interval_start, interval_end,\n    high_price_eur_mwh, low_price_eur_mwh, last_price_eur_mwh,\n    observation_count, calculated_from, source_published_at, raw_payload_id\n  )\n  select\n    sm.source_id, sm.market_id, ${sqlString(intervalType)}, n.interval_start,\n    n.interval_start + make_interval(mins => ${Number($json.product_minutes)}),\n    n.high_price_eur_mwh, n.low_price_eur_mwh, n.last_price_eur_mwh,\n    1, 'epex_public_market_results_complete', now(), rp.id\n  from normalized n\n  cross join required_source_market sm\n  cross join raw_payload rp\n  on conflict (source_id, market_id, interval_type, interval_start, interval_end)\n  do update set\n    high_price_eur_mwh = excluded.high_price_eur_mwh,\n    low_price_eur_mwh = excluded.low_price_eur_mwh,\n    last_price_eur_mwh = excluded.last_price_eur_mwh,\n    observation_count = excluded.observation_count,\n    calculated_from = excluded.calculated_from,\n    source_published_at = coalesce(\n      energy_data.market_price_ohlc.source_published_at,\n      excluded.source_published_at\n    ),\n    raw_payload_id = excluded.raw_payload_id,\n    calculated_at = now()\n  returning 1\n), upserted_points as (\n  insert into energy_data.market_price_points (\n    source_id, market_id, product, delivery_start, delivery_end, price_eur_mwh,\n    currency, source_published_at, source_position, resolution, raw_payload_id\n  )\n  select\n    sm.source_id, sm.market_id, 'intraday_continuous', n.interval_start,\n    n.interval_start + make_interval(mins => ${Number($json.product_minutes)}),\n    n.last_price_eur_mwh, 'EUR', timestamp with time zone '1970-01-01 00:00:00+00',\n    n.position + 1, ${sqlString($json.product_minutes === 15 ? 'PT15M' : 'PT60M')}, rp.id\n  from normalized n\n  cross join required_source_market sm\n  cross join raw_payload rp\n  on conflict (source_id, market_id, product, delivery_start, delivery_end, source_published_at)\n  do update set\n    price_eur_mwh = excluded.price_eur_mwh,\n    source_position = excluded.source_position,\n    resolution = excluded.resolution,\n    raw_payload_id = excluded.raw_payload_id,\n    ingested_at = now()\n  returning 1\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name, source_id, finished_at, status, records_read, records_written, metadata\n)\nselect ${sqlString(workflowName)}, sm.source_id, now(), 'success', ${rows.length},\n  count(*)::integer, ${sqlJson({ key: $json.key, delivery_date: $json.delivery_date })}\nfrom required_source_market sm\ncross join upserted_ohlc\ngroup by sm.source_id\nreturning status, records_read, records_written;`;\n}\n\nreturn [{\n  json: {\n    workflow_name: workflowName,\n    result_type: $json.key,\n    delivery_date: $json.delivery_date,\n    records_valid: rows.length,\n    sql,\n  },\n}];\n"
+      },
+      "id": "epex-complete-parse",
+      "name": "Validate and Parse EPEX Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{$json.sql}}",
+        "options": {}
+      },
+      "id": "epex-complete-store",
+      "name": "Store Validated EPEX Result",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1300,
+        90
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Test - All Six Products": {
+      "main": [
+        [
+          {
+            "node": "Build EPEX Complete Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 30 minutes": {
+      "main": [
+        [
+          {
+            "node": "Build EPEX Complete Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build EPEX Complete Requests": {
+      "main": [
+        [
+          {
+            "node": "Fetch EPEX Result Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch EPEX Result Page": {
+      "main": [
+        [
+          {
+            "node": "Attach EPEX Request Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach EPEX Request Metadata": {
+      "main": [
+        [
+          {
+            "node": "Validate and Parse EPEX Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate and Parse EPEX Result": {
+      "main": [
+        [
+          {
+            "node": "Store Validated EPEX Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin"
+  },
+  "tags": []
+}

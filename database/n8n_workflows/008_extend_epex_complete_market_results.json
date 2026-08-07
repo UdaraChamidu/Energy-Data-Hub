@@ -1,0 +1,49 @@
+{
+  "name": "database_migration_008_extend_epex_complete_market_results",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "migration-008-manual-trigger",
+      "name": "Run Migration 008 Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Extend the provisional EPEX schema for Werner's complete market-result set.\n-- Safe to run more than once. Apply after migration 006.\n\nbegin;\n\nalter table energy_data.epex_intraday_auction_results\n  add column if not exists trading_date date,\n  add column if not exists product_minutes integer not null default 15,\n  add column if not exists market_area text not null default 'DE-LU';\n\ndo $$\nbegin\n  if not exists (\n    select 1\n    from pg_constraint\n    where conname = 'epex_auction_product_minutes_chk'\n      and conrelid = 'energy_data.epex_intraday_auction_results'::regclass\n  ) then\n    alter table energy_data.epex_intraday_auction_results\n      add constraint epex_auction_product_minutes_chk\n      check (product_minutes in (15, 30, 60));\n  end if;\nend $$;\n\nalter table energy_data.market_price_ohlc\n  add column if not exists source_published_at timestamptz,\n  add column if not exists raw_payload_id bigint references energy_data.raw_api_payloads(id);\n\ncreate index if not exists epex_auction_code_delivery_idx\non energy_data.epex_intraday_auction_results\n  (auction_code, delivery_start desc);\n\ncreate or replace view energy_data.v_grafana_epex_auction_results as\nselect\n  r.delivery_start as \"time\",\n  r.delivery_end,\n  r.trading_date,\n  r.auction_code,\n  r.product_minutes,\n  r.market_area,\n  r.price_eur_mwh,\n  r.buy_volume_mwh,\n  r.sell_volume_mwh,\n  r.volume_mwh,\n  r.source_published_at,\n  r.ingested_at,\n  s.code as source_code,\n  m.country_code,\n  m.bidding_zone\nfrom energy_data.epex_intraday_auction_results r\njoin energy_data.data_sources s on s.id = r.source_id\njoin energy_data.markets m on m.id = r.market_id;\n\ncreate or replace view energy_data.v_grafana_epex_continuous_results as\nselect\n  p.interval_start as \"time\",\n  p.interval_end,\n  p.interval_type,\n  p.high_price_eur_mwh,\n  p.low_price_eur_mwh,\n  p.last_price_eur_mwh,\n  p.observation_count,\n  p.source_published_at,\n  p.calculated_at as ingested_at,\n  s.code as source_code,\n  m.country_code,\n  m.bidding_zone\nfrom energy_data.market_price_ohlc p\njoin energy_data.data_sources s on s.id = p.source_id\njoin energy_data.markets m on m.id = p.market_id\nwhere s.code = 'epex_spot_web'\n  and p.calculated_from = 'epex_public_market_results_complete';\n\ncreate or replace view energy_data.v_epex_complete_coverage as\nselect\n  product_name,\n  max(latest_delivery) as latest_delivery,\n  max(latest_ingestion) as latest_ingestion,\n  sum(row_count)::bigint as row_count\nfrom (\n  select\n    r.auction_code as product_name,\n    max(r.delivery_start) as latest_delivery,\n    max(r.ingested_at) as latest_ingestion,\n    count(*) as row_count\n  from energy_data.epex_intraday_auction_results r\n  where r.auction_code in ('MRC', 'IDA1', 'IDA2', 'IDA3')\n  group by r.auction_code\n\n  union all\n\n  select\n    'CONTINUOUS_' || upper(replace(p.interval_type, 'm', 'MIN')) as product_name,\n    max(p.interval_start) as latest_delivery,\n    max(p.calculated_at) as latest_ingestion,\n    count(*) as row_count\n  from energy_data.market_price_ohlc p\n  join energy_data.data_sources s on s.id = p.source_id\n  where s.code = 'epex_spot_web'\n    and p.calculated_from = 'epex_public_market_results_complete'\n  group by p.interval_type\n) coverage\ngroup by product_name;\n\ncommit;\n\nselect case\n  when to_regclass('energy_data.v_grafana_epex_auction_results') is not null\n   and to_regclass('energy_data.v_grafana_epex_continuous_results') is not null\n   and to_regclass('energy_data.v_epex_complete_coverage') is not null\n  then 'Migration 008 completed successfully'\n  else 'Migration 008 verification failed'\nend as migration_status;",
+        "options": {}
+      },
+      "id": "migration-008-postgres",
+      "name": "Apply and Verify Migration 008",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        300,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Run Migration 008 Manually": {
+      "main": [
+        [
+          {
+            "node": "Apply and Verify Migration 008",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

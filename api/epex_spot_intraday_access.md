@@ -1,11 +1,18 @@
 # EPEX SPOT Germany Intraday Data Access
 
-Research checked: 2026-07-31.
+Research checked: 2026-08-07.
 
 Client decision on 2026-08-04: use Fraunhofer Energy-Charts as the provisional
 test source and reconsider licensed EPEX access later. The implemented workflow
 polls the two weekly files every 30 minutes and stores Average/Low/High/ID1/ID3
 without labelling Average as Last.
+
+On 2026-08-06 Werner clarified the final EPEX product list: Day-Ahead MRC,
+IDA1, IDA2, IDA3, Continuous 15-minute, and Continuous 60-minute. Workflow
+`08_epex_complete_market_results_de.json`, migration `008`, and the aligned
+EPEX dashboard implement that contract without replacing the working fallback.
+All six normal HTTPS checks returned HTTP 403 on 2026-08-07, so workflow `08`
+must remain inactive unless normal permitted access later succeeds.
 
 ## Requirement
 

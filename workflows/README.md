@@ -40,6 +40,25 @@ manufacture a Last value. Run database migration `007` before testing it.
 Keep `06_epex_spot_intraday_web_de.json` inactive while direct EPEX continuous
 requests remain unreliable.
 
+## EPEX Complete Market Results
+
+`08_epex_complete_market_results_de.json` implements Werner's exact requested
+product list: Day-Ahead MRC, IDA1, IDA2, IDA3, Continuous 15-minute, and
+Continuous 60-minute. It uses only normal HTTPS requests. It contains no Tor,
+proxy rotation, IP disguise, or embedded secret.
+
+Manual execution builds and tests all six requests. Scheduled execution runs
+every 30 minutes, always checks the two continuous products, and checks auction
+pages only during their expected Europe/Berlin publication hour to reduce
+requests. The parser rejects blocked pages, wrong tables, wrong delivery dates,
+invalid price bounds, and incomplete 23/24/25 or 92/96/100-row days before SQL
+is executed.
+
+Apply migration `008`, assign the existing PostgreSQL credential to `Store
+Validated EPEX Result`, and test manually. Keep workflow `08` inactive unless
+all six items reach PostgreSQL successfully through normal access and EPEX use
+is approved. Fraunhofer workflow `07` remains the working fallback.
+
 ## Before Activating
 
 Create or select your n8n PostgreSQL credential, then assign it to every PostgreSQL node after import. The workflow JSON files intentionally do not include placeholder PostgreSQL credential IDs, so imports should be cleaner across n8n instances.

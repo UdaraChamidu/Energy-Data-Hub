@@ -52,6 +52,23 @@ Fraunhofer publishes delayed continuous intraday Average, Low, High, ID1 and
 ID3 values. The dashboard therefore says `Average`, never `Last`, and labels
 summary values as `Latest Published` or `Latest Day` rather than live/today.
 
+## EPEX Complete Dashboard
+
+After migrations `006` and `008` and a successful manual workflow `08` test,
+import `grafana/dashboards/germany-energy-monitoring-epex-complete.json`. It has
+the separate UID `energy-data-hub-de-epex-complete` and does not replace the
+SMARD/ENTSO-E or Fraunhofer dashboards.
+
+The dashboard stacks Grid Frequency, Grid Time Deviation, MRC, IDA1, IDA2,
+IDA3, Continuous 15-minute, and Continuous 60-minute at `x=0`, `w=24`. Every
+chart uses a fixed 90-pixel Y-axis width and the shared crosshair. Its initial
+range is `now-24h` to `now+24h`, allowing prices formed today for tomorrow's
+delivery periods to appear on the delivery-time axis.
+
+Importing this dashboard does not make EPEX data available. Its EPEX panels are
+expected to show No data until workflow `08` passes all six normal-access
+requests and writes the corresponding PostgreSQL rows.
+
 For public sharing, import
 `grafana/dashboards/germany-energy-monitoring-compact-external.json` instead. It
 uses automatic price-source selection without a template variable, which Grafana
