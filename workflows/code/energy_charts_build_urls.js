@@ -18,13 +18,24 @@ function isoWeek(parts) {
   return { year: weekYear, week: String(week).padStart(2, '0') };
 }
 
-const current = isoWeek(berlinDateParts(new Date()));
+const now = new Date();
+const berlinParts = berlinDateParts(now);
+const berlinDate = new Date(`${berlinParts.year}-${berlinParts.month}-${berlinParts.day}T12:00:00Z`);
+const berlinWeekday = berlinDate.getUTCDay() || 7;
+
+// Fraunhofer creates the new weekly file on Monday before its continuous
+// intraday series are available. Keep using the completed previous week for
+// that boundary day so the collector does not fail on missing series.
+if (berlinWeekday === 1) berlinDate.setUTCDate(berlinDate.getUTCDate() - 1);
+
+const current = isoWeek(berlinDateParts(berlinDate));
 const base = 'https://energy-charts.info/charts/price_spot_market/data/de';
 
 return [{
   json: {
     iso_year: current.year,
     iso_week: current.week,
+    monday_previous_week_fallback: berlinWeekday === 1,
     quarter_hour_url: `${base}/week_15min_${current.year}_${current.week}.json`,
     hourly_url: `${base}/week_${current.year}_${current.week}.json`,
   },
