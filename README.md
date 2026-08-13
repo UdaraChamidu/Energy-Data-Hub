@@ -4,7 +4,7 @@ Germany-first electricity-grid and market-data pipeline for the client's Grafana
 
 The project prefers structured APIs and uses scheduled n8n collectors, PostgreSQL storage, and Grafana dashboards that read only from PostgreSQL. A fail-closed EPEX public-results collector is included for normal-access testing only.
 
-```text 
+```text  
 netzfrequenzmessung.de ----+
                            |
 ENTSO-E Transparency ------+--> n8n --> PostgreSQL --> Grafana
