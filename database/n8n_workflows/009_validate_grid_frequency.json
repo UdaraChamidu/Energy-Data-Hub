@@ -1,0 +1,50 @@
+{
+  "name": "database_migration_009_validate_grid_frequency",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "migration-009-manual-trigger",
+      "name": "Run Migration 009 Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Reject implausible grid-frequency measurements while retaining raw payloads.\n-- Safe to run more than once. Apply after migration 003.\n\nbegin;\n\n-- The source payload remains in raw_api_payloads for audit purposes.\ndelete from energy_data.grid_frequency_measurements\nwhere actual_hz < 45 or actual_hz > 55;\n\nalter table energy_data.grid_frequency_measurements\n  drop constraint if exists grid_frequency_actual_chk;\n\nalter table energy_data.grid_frequency_measurements\n  add constraint grid_frequency_actual_chk\n  check (actual_hz between 45 and 55);\n\ncreate or replace view energy_data.v_grid_frequency_latest as\nselect distinct on (m.id)\n  g.measured_at as \"time\",\n  s.code as source_code,\n  m.country_code,\n  m.bidding_zone,\n  m.eic_code,\n  g.target_hz,\n  g.actual_hz,\n  g.source_published_at,\n  g.ingested_at,\n  g.quality\nfrom energy_data.grid_frequency_measurements g\njoin energy_data.data_sources s on s.id = g.source_id\njoin energy_data.markets m on m.id = g.market_id\nwhere g.actual_hz between 45 and 55\norder by m.id, g.measured_at desc;\n\ncreate or replace view energy_data.v_grafana_grid_frequency as\nselect\n  g.measured_at as \"time\",\n  m.country_code,\n  m.bidding_zone,\n  m.eic_code,\n  g.target_hz,\n  g.actual_hz,\n  g.quality\nfrom energy_data.grid_frequency_measurements g\njoin energy_data.markets m on m.id = g.market_id\nwhere g.actual_hz between 45 and 55;\n\ncommit;\n\nselect\n  count(*) filter (where actual_hz < 45 or actual_hz > 55) as invalid_rows_remaining,\n  min(actual_hz) as minimum_frequency_hz,\n  max(actual_hz) as maximum_frequency_hz\nfrom energy_data.grid_frequency_measurements;\n",
+        "options": {}
+      },
+      "id": "migration-009-postgres",
+      "name": "Apply Frequency Validation",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        560,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Run Migration 009 Manually": {
+      "main": [
+        [
+          {
+            "node": "Apply Frequency Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "00000000-0000-4000-8000-000000000009"
+}
