@@ -27,9 +27,12 @@ Import `workflows/10_market_prices_energy_charts_auctions_de_lu.json`.
 5. Confirm the PostgreSQL node succeeds for every parser output item.
 6. Activate the workflow. It polls every 30 minutes.
 
-The collector checks the current and following ISO week. This captures next-day
-Monday delivery prices when they become available on Sunday. It archives each
-distinct raw weekly response and upserts published 15-minute clearing prices.
+The collector checks the current and following ISO week. On Mondays it also
+checks the completed previous week so a `now-24h` dashboard includes Sunday's
+rows across the ISO-week boundary. This captures next-day Monday delivery prices
+when they become available on Sunday without adding the historical request on
+other weekdays. It archives each distinct raw weekly response and upserts
+published 15-minute clearing prices.
 
 ## 3. Verify PostgreSQL Coverage
 

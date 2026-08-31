@@ -32,7 +32,8 @@ manufacture a Last value. Run database migration `007` before testing it.
 `10_market_prices_energy_charts_auctions_de_lu.json` is a separate collector for
 fixed 15-minute auction clearing prices. It maps Day-Ahead, IDA1, IDA2, and IDA3
 from the Fraunhofer weekly chart JSON, checks the current and following ISO week,
-archives distinct raw payloads, and preserves missing not-yet-published values.
+adds the previous week on Mondays for timeline continuity, archives distinct raw
+payloads, and preserves missing not-yet-published values.
 Apply migration `010` first and follow `FRAUNHOFER_AUCTION_SETUP.md`.
 
 ## Import Order
