@@ -27,6 +27,14 @@ temporary collector. It makes two public requests every 30 minutes and stores
 15-minute and 60-minute Average, Low, High, ID1 and ID3 values. It does not
 manufacture a Last value. Run database migration `007` before testing it.
 
+## Fraunhofer Day-Ahead And IDA1-3 Auctions
+
+`10_market_prices_energy_charts_auctions_de_lu.json` is a separate collector for
+fixed 15-minute auction clearing prices. It maps Day-Ahead, IDA1, IDA2, and IDA3
+from the Fraunhofer weekly chart JSON, checks the current and following ISO week,
+archives distinct raw payloads, and preserves missing not-yet-published values.
+Apply migration `010` first and follow `FRAUNHOFER_AUCTION_SETUP.md`.
+
 ## Import Order
 
 1. `01_grid_frequency_netzfrequenzmessung_de.json`
@@ -36,6 +44,7 @@ manufacture a Last value. Run database migration `007` before testing it.
 5. `04_market_price_ohlc_builder.json`
 6. `05_ingestion_health_monitor.json`
 7. `07_market_prices_energy_charts_intraday_de_lu.json`
+8. `10_market_prices_energy_charts_auctions_de_lu.json`
 
 Keep `06_epex_spot_intraday_web_de.json` inactive while direct EPEX continuous
 requests remain unreliable.

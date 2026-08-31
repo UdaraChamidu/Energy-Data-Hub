@@ -69,6 +69,20 @@ Importing this dashboard does not make EPEX data available. Its EPEX panels are
 expected to show No data until workflow `08` passes all six normal-access
 requests and writes the corresponding PostgreSQL rows.
 
+## Fraunhofer Auction Test Dashboard
+
+After migration `010` and workflow `10` succeed, import
+`grafana/dashboards/germany-energy-monitoring-fraunhofer-auctions.json`. Its UID
+is `energy-data-hub-de-fraunhofer-auctions`, so it does not replace either
+existing dashboard.
+
+It stacks Grid Frequency, Grid Time Deviation, Day-Ahead, IDA1, IDA2, IDA3,
+continuous 15-minute, and continuous 60-minute panels on one aligned timeline.
+The four auction panels contain one fixed clearing price per 15-minute interval,
+use step-after lines without fill, allow negative values, and show tomorrow's
+delivery periods using the initial `now-24h` to `now+24h` range. Continuous
+panels are explicitly labelled provisional and are not auction curves.
+
 For public sharing, import
 `grafana/dashboards/germany-energy-monitoring-compact-external.json` instead. It
 uses automatic price-source selection without a template variable, which Grafana

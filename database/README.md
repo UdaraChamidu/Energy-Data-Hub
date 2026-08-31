@@ -13,6 +13,8 @@ Run these files in order:
 5. `006_add_epex_spot_web.sql`
 6. `007_add_energy_charts_intraday.sql`
 7. `008_extend_epex_complete_market_results.sql`
+8. `009_validate_grid_frequency.sql`
+9. `010_add_energy_charts_auctions.sql`
 
 `004_upsert_examples.sql` is not a migration. It contains reference SQL snippets for n8n PostgreSQL nodes.
 
@@ -78,6 +80,15 @@ the client-approved provisional Fraunhofer Average/Low/High/ID1/ID3 feed.
 Migration `008` reuses the EPEX auction and OHLC tables, adds trading/product
 metadata, and creates `v_grafana_epex_auction_results`,
 `v_grafana_epex_continuous_results`, and `v_epex_complete_coverage`.
+
+Migration `009` removes implausible frequency measurements and enforces the
+approved 45-55 Hz storage and Grafana-view range.
+
+Migration `010` adds `energy_charts_auction_prices`,
+`v_grafana_energy_charts_auctions`, and
+`v_energy_charts_auction_coverage`. Without direct PostgreSQL access, import
+`database/n8n_workflows/010_add_energy_charts_auctions.json`, assign the existing
+PostgreSQL credential, execute it once, and keep it inactive afterward.
 
 Seeded market:
 

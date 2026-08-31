@@ -131,6 +131,8 @@ Apply these scripts to the same PostgreSQL database in this exact order:
 5. [`database/006_add_epex_spot_web.sql`](database/006_add_epex_spot_web.sql)
 6. [`database/007_add_energy_charts_intraday.sql`](database/007_add_energy_charts_intraday.sql)
 7. [`database/008_extend_epex_complete_market_results.sql`](database/008_extend_epex_complete_market_results.sql)
+8. [`database/009_validate_grid_frequency.sql`](database/009_validate_grid_frequency.sql)
+9. [`database/010_add_energy_charts_auctions.sql`](database/010_add_energy_charts_auctions.sql)
 
 The scripts are idempotent and can be applied again when necessary.
 
@@ -166,6 +168,7 @@ Import and manually test the workflows in this order:
 7. [`workflows/06_epex_spot_intraday_web_de.json`](workflows/06_epex_spot_intraday_web_de.json)
 8. [`workflows/07_market_prices_energy_charts_intraday_de_lu.json`](workflows/07_market_prices_energy_charts_intraday_de_lu.json)
 9. [`workflows/08_epex_complete_market_results_de.json`](workflows/08_epex_complete_market_results_de.json)
+10. [`workflows/10_market_prices_energy_charts_auctions_de_lu.json`](workflows/10_market_prices_energy_charts_auctions_de_lu.json)
 
 Keep each workflow inactive until its manual execution succeeds. Activate it only after confirming the expected PostgreSQL rows.
 
@@ -182,6 +185,7 @@ from energy_data.v_grafana_market_price_stats_today
 order by source_code, interval_type;
 select * from energy_data.v_ingestion_health;
 select * from energy_data.v_grafana_energy_charts_intraday_latest;
+select * from energy_data.v_energy_charts_auction_coverage order by auction_code;
 select *
 from energy_data.ingestion_alerts
 where resolved_at is null;
@@ -236,6 +240,7 @@ node .\scripts\validate_grafana_dashboard.js
 | `ingestion_health_monitor` | 2 | Insert, refresh, and resolve stale-data alerts |
 | `epex_spot_intraday_web_de` | 8 | Validate and store EPEX IDA1 auction and continuous 15/60-minute results |
 | `market_prices_energy_charts_intraday_de_lu` | 8 | Store provisional Fraunhofer 15/60-minute Average/Low/High/ID1/ID3 data |
+| `market_prices_energy_charts_auctions_de_lu` | 6 | Store Fraunhofer Day-Ahead and IDA1-3 fixed 15-minute auction prices |
 
 Two-node workflows are intentional when PostgreSQL performs the calculation atomically in one SQL statement.
 

@@ -1,0 +1,42 @@
+{
+  "api_url": "https://api.energy-charts.info/v2/price?bzn=DE-LU&start=2026-08-24&end=2026-08-30",
+  "chart_url": "https://energy-charts.info/charts/price_spot_market/data/de/week_15min_2026_35.json",
+  "summary": [
+    {
+      "auction_code": "day_ahead",
+      "source_series_name": "Day Ahead Auction (DE-LU)",
+      "valid_rows": 672,
+      "first_delivery_utc": "2026-08-23T22:00:00.000Z",
+      "last_delivery_utc": "2026-08-30T21:45:00.000Z",
+      "minimum_price_eur_mwh": -2.02,
+      "maximum_price_eur_mwh": 249.92
+    },
+    {
+      "auction_code": "ida1",
+      "source_series_name": "Pan-European Intraday auction, 15 minutes IDA1 price (DE-LU)",
+      "valid_rows": 672,
+      "first_delivery_utc": "2026-08-23T22:00:00.000Z",
+      "last_delivery_utc": "2026-08-30T21:45:00.000Z",
+      "minimum_price_eur_mwh": -2.91,
+      "maximum_price_eur_mwh": 235.59
+    },
+    {
+      "auction_code": "ida2",
+      "source_series_name": "Pan-European Intraday auction, 15 minutes IDA2 price (DE-LU)",
+      "valid_rows": 576,
+      "first_delivery_utc": "2026-08-23T22:00:00.000Z",
+      "last_delivery_utc": "2026-08-30T21:45:00.000Z",
+      "minimum_price_eur_mwh": -2.09,
+      "maximum_price_eur_mwh": 240.18
+    },
+    {
+      "auction_code": "ida3",
+      "source_series_name": "Pan-European Intraday auction, 15 minutes IDA3 price (DE-LU)",
+      "valid_rows": 336,
+      "first_delivery_utc": "2026-08-24T10:00:00.000Z",
+      "last_delivery_utc": "2026-08-30T21:45:00.000Z",
+      "minimum_price_eur_mwh": -8.84,
+      "maximum_price_eur_mwh": 242.43
+    }
+  ]
+}

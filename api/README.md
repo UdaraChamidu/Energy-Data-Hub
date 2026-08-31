@@ -12,6 +12,9 @@ Client-named sources are implemented as follows:
 - ENTSO-E: primary DE-LU official day-ahead price ingestion.
 - SMARD: independent DE-LU wholesale-price fallback/cross-check.
 - netzfrequenzmessung.de: live frequency source explicitly permitted by the detailed client requirements because SMARD has no suitable sub-5-second series.
+- Fraunhofer auction mapping: the documented API provides Day-Ahead, while the
+  validated weekly chart JSON currently provides Day-Ahead and IDA1-3. See
+  `fraunhofer_auction_mapping.md` and `samples/`.
 
 Read first:
 
@@ -20,4 +23,5 @@ Read first:
 - [api_limitations_and_decisions.md](api_limitations_and_decisions.md)
 - [entsoe_token_setup.md](entsoe_token_setup.md)
 - [epex_spot_intraday_access.md](epex_spot_intraday_access.md)
+- [fraunhofer_auction_mapping.md](fraunhofer_auction_mapping.md)
 - [../docs/client_requirements_traceability.md](../docs/client_requirements_traceability.md)

@@ -1,0 +1,176 @@
+{
+  "name": "market_prices_energy_charts_auctions_de_lu",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "energy-charts-auction-schedule",
+      "name": "Every 30 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        60
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "energy-charts-auction-manual",
+      "name": "Test Auctions Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function berlinDateParts(date) {\n  const parts = new Intl.DateTimeFormat('en-CA', {\n    timeZone: 'Europe/Berlin',\n    year: 'numeric', month: '2-digit', day: '2-digit',\n  }).formatToParts(date);\n  return Object.fromEntries(parts.map((part) => [part.type, part.value]));\n}\n\nfunction isoWeek(parts) {\n  const date = new Date(`${parts.year}-${parts.month}-${parts.day}T12:00:00Z`);\n  const day = date.getUTCDay() || 7;\n  date.setUTCDate(date.getUTCDate() + 4 - day);\n  const weekYear = date.getUTCFullYear();\n  const yearStart = new Date(Date.UTC(weekYear, 0, 1));\n  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);\n  return { year: weekYear, week: String(week).padStart(2, '0') };\n}\n\nconst berlin = berlinDateParts(new Date());\nconst berlinNoon = new Date(`${berlin.year}-${berlin.month}-${berlin.day}T12:00:00Z`);\nconst current = isoWeek(berlinDateParts(berlinNoon));\nberlinNoon.setUTCDate(berlinNoon.getUTCDate() + 7);\nconst next = isoWeek(berlinDateParts(berlinNoon));\nconst base = 'https://energy-charts.info/charts/price_spot_market/data/de';\n\nreturn [current, next].map((period, index) => ({\n  json: {\n    period: index === 0 ? 'current_week' : 'next_week',\n    iso_year: period.year,\n    iso_week: period.week,\n    request_url: `${base}/week_15min_${period.year}_${period.week}.json`,\n  },\n}));\n"
+      },
+      "id": "energy-charts-auction-build",
+      "name": "Build Current and Next Week URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.request_url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Energy-Data-Hub/1.0 (Fraunhofer auction collector)"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 45000
+        }
+      },
+      "id": "energy-charts-auction-fetch",
+      "name": "Fetch Fraunhofer Weekly Auctions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const inputItems = typeof $input !== 'undefined' ? $input.all() : [{ json: $json }];\nconst expectedNames = {\n  day_ahead: 'Day Ahead Auction (DE-LU)',\n  ida1: 'Pan-European Intraday auction, 15 minutes IDA1 price (DE-LU)',\n  ida2: 'Pan-European Intraday auction, 15 minutes IDA2 price (DE-LU)',\n  ida3: 'Pan-European Intraday auction, 15 minutes IDA3 price (DE-LU)',\n};\n\nfunction englishName(series) {\n  let name = series?.name;\n  while (Array.isArray(name)) name = name[0];\n  if (typeof name === 'string') return name;\n  return name?.en;\n}\n\nfunction extractPayload(item) {\n  let value = item?.json?.body ?? item?.json?.data ?? item?.json;\n  if (typeof value === 'string') {\n    try { value = JSON.parse(value); } catch { return null; }\n  }\n  return Array.isArray(value) ? value : null;\n}\n\nfunction berlinDateParts(date) {\n  const parts = new Intl.DateTimeFormat('en-CA', {\n    timeZone: 'Europe/Berlin',\n    year: 'numeric', month: '2-digit', day: '2-digit',\n  }).formatToParts(date);\n  return Object.fromEntries(parts.map((part) => [part.type, part.value]));\n}\n\nfunction isoWeek(parts) {\n  const date = new Date(`${parts.year}-${parts.month}-${parts.day}T12:00:00Z`);\n  const day = date.getUTCDay() || 7;\n  date.setUTCDate(date.getUTCDate() + 4 - day);\n  const weekYear = date.getUTCFullYear();\n  const yearStart = new Date(Date.UTC(weekYear, 0, 1));\n  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);\n  return { year: weekYear, week: String(week).padStart(2, '0') };\n}\n\nfunction sqlString(value) {\n  if (value === null || value === undefined) return 'null';\n  return `'${String(value).replace(/'/g, \"''\")}'`;\n}\n\nfunction sqlJson(value) {\n  return `${sqlString(JSON.stringify(value))}::jsonb`;\n}\n\nconst workflowName = 'market_prices_energy_charts_auctions_de_lu';\nconst observedAt = new Date().toISOString();\nconst outputs = [];\n\nfor (const inputItem of inputItems) {\n  const payload = extractPayload(inputItem);\n  if (!payload?.length) continue;\n\n  const axis = payload.find((series) => Array.isArray(series?.xAxisValues));\n  const timestamps = axis?.xAxisValues;\n  if (!Array.isArray(timestamps) || timestamps.length === 0) continue;\n\n  const firstTimestamp = Number(timestamps[0]);\n  if (!Number.isFinite(firstTimestamp)) continue;\n  const period = isoWeek(berlinDateParts(new Date(firstTimestamp)));\n  const requestUrl = `https://energy-charts.info/charts/price_spot_market/data/de/week_15min_${period.year}_${period.week}.json`;\n  const rows = [];\n  const counts = {};\n\n  for (const [auctionCode, expectedName] of Object.entries(expectedNames)) {\n    const series = payload.find((candidate) => englishName(candidate) === expectedName);\n    if (!series) {\n      counts[auctionCode] = 0;\n      continue;\n    }\n    if (!Array.isArray(series.data) || series.data.length !== timestamps.length) {\n      throw new Error(`${expectedName} does not match the shared timestamp axis.`);\n    }\n\n    let count = 0;\n    for (let index = 0; index < timestamps.length; index += 1) {\n      if (series.data[index] === null || series.data[index] === '') continue;\n      const timestamp = Number(timestamps[index]);\n      const price = Number(series.data[index]);\n      if (!Number.isFinite(timestamp) || !Number.isFinite(price)) continue;\n      rows.push({\n        auction_code: auctionCode,\n        delivery_start: new Date(timestamp).toISOString(),\n        delivery_end: new Date(timestamp + 15 * 60 * 1000).toISOString(),\n        price_eur_mwh: price,\n        source_series_name: expectedName,\n      });\n      count += 1;\n    }\n    counts[auctionCode] = count;\n  }\n\n  if (rows.length === 0) continue;\n  const rawJson = JSON.stringify(payload);\n  const sql = `with source_market as (\n  select s.id as source_id, m.id as market_id\n  from energy_data.data_sources s\n  cross join energy_data.markets m\n  where s.code = 'energy_charts'\n    and m.country_code = 'DE'\n    and m.bidding_zone = 'DE-LU'\n), required_source_market as (\n  select\n    (select source_id from source_market) as source_id,\n    (select market_id from source_market) as market_id\n), existing_payload as (\n  select r.id\n  from energy_data.raw_api_payloads r\n  cross join required_source_market sm\n  where r.source_id = sm.source_id\n    and r.request_hash = md5(${sqlString(rawJson)})\n  order by r.received_at desc\n  limit 1\n), inserted_payload as (\n  insert into energy_data.raw_api_payloads (\n    source_id, workflow_name, request_url, request_hash, response_status, payload\n  )\n  select\n    sm.source_id, ${sqlString(workflowName)}, ${sqlString(requestUrl)},\n    md5(${sqlString(rawJson)}), 200, ${sqlJson(payload)}\n  from required_source_market sm\n  where not exists (select 1 from existing_payload)\n  returning id\n), selected_payload as (\n  select id from existing_payload\n  union all\n  select id from inserted_payload\n  limit 1\n), input_rows as (\n  select *\n  from jsonb_to_recordset(${sqlJson(rows)}) as x(\n    auction_code text,\n    delivery_start timestamptz,\n    delivery_end timestamptz,\n    price_eur_mwh numeric,\n    source_series_name text\n  )\n), upserted as (\n  insert into energy_data.energy_charts_auction_prices (\n    source_id, market_id, auction_code, delivery_start, delivery_end,\n    price_eur_mwh, currency, source_series_name, first_observed_at,\n    last_observed_at, raw_payload_id\n  )\n  select\n    sm.source_id, sm.market_id, i.auction_code, i.delivery_start, i.delivery_end,\n    i.price_eur_mwh, 'EUR', i.source_series_name, ${sqlString(observedAt)}::timestamptz,\n    ${sqlString(observedAt)}::timestamptz, rp.id\n  from input_rows i\n  cross join required_source_market sm\n  cross join selected_payload rp\n  on conflict (source_id, market_id, auction_code, delivery_start, delivery_end)\n  do update set\n    price_eur_mwh = excluded.price_eur_mwh,\n    source_series_name = excluded.source_series_name,\n    last_observed_at = excluded.last_observed_at,\n    ingested_at = now(),\n    raw_payload_id = excluded.raw_payload_id\n  returning 1\n)\ninsert into energy_data.ingestion_runs (\n  workflow_name, source_id, finished_at, status,\n  records_read, records_written, metadata\n)\nselect\n  ${sqlString(workflowName)}, sm.source_id, now(), 'success',\n  ${timestamps.length * Object.keys(expectedNames).length}, count(*)::integer,\n  ${sqlJson({ request_url: requestUrl, iso_year: period.year, iso_week: period.week, counts })}\nfrom required_source_market sm\ncross join upserted\ngroup by sm.source_id\nreturning status, records_read, records_written, metadata;`;\n\n  outputs.push({\n    json: {\n      workflow_name: workflowName,\n      request_url: requestUrl,\n      iso_year: period.year,\n      iso_week: period.week,\n      records_valid: rows.length,\n      product_counts: counts,\n      sql,\n    },\n  });\n}\n\nif (outputs.length === 0) {\n  throw new Error('No usable Fraunhofer weekly auction payload was returned.');\n}\n\nreturn outputs;\n"
+      },
+      "id": "energy-charts-auction-parse",
+      "name": "Parse Day-Ahead and IDA1-3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{$json.sql}}",
+        "options": {}
+      },
+      "id": "energy-charts-auction-store",
+      "name": "Store Fraunhofer Auction Prices",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1100,
+        140
+      ]
+    }
+  ],
+  "connections": {
+    "Every 30 minutes": {
+      "main": [
+        [
+          {
+            "node": "Build Current and Next Week URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Auctions Manually": {
+      "main": [
+        [
+          {
+            "node": "Build Current and Next Week URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Current and Next Week URLs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Fraunhofer Weekly Auctions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Fraunhofer Weekly Auctions": {
+      "main": [
+        [
+          {
+            "node": "Parse Day-Ahead and IDA1-3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Day-Ahead and IDA1-3": {
+      "main": [
+        [
+          {
+            "node": "Store Fraunhofer Auction Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

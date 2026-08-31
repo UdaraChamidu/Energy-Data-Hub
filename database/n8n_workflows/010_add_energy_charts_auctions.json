@@ -1,0 +1,50 @@
+{
+  "name": "database_migration_010_add_energy_charts_auctions",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "migration-010-manual-trigger",
+      "name": "Run Migration 010 Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Add Fraunhofer Day-Ahead and IDA1-3 auction clearing prices.\n-- Safe to run more than once. Apply after migration 007.\n\nbegin;\n\ninsert into energy_data.data_sources (\n  code, name, base_url, requires_auth, is_active, notes\n)\nvalues (\n  'energy_charts',\n  'Fraunhofer ISE Energy-Charts',\n  'https://energy-charts.info/',\n  false,\n  true,\n  'Provisional source for DE-LU Day-Ahead and IDA1-3 auction clearing prices. Weekly chart JSON is validated and archived because it is not a documented stable API contract.'\n)\non conflict (code) do update\nset\n  name = excluded.name,\n  base_url = excluded.base_url,\n  requires_auth = excluded.requires_auth,\n  is_active = excluded.is_active,\n  notes = excluded.notes,\n  updated_at = now();\n\ninsert into energy_data.collector_settings (key, value, description, is_secret)\nvalues\n  (\n    'ENERGY_CHARTS_AUCTION_BASE_URL',\n    'https://energy-charts.info/charts/price_spot_market/data/de/',\n    'Fraunhofer 15-minute weekly chart JSON used for DE-LU Day-Ahead and IDA1-3 auction curves.',\n    false\n  ),\n  (\n    'ENERGY_CHARTS_AUCTION_POLL_MINUTES',\n    '30',\n    'Polling interval for provisional Fraunhofer auction results.',\n    false\n  )\non conflict (key) do update\nset\n  value = excluded.value,\n  description = excluded.description,\n  is_secret = excluded.is_secret,\n  updated_at = now();\n\ncreate table if not exists energy_data.energy_charts_auction_prices (\n  id bigserial primary key,\n  source_id bigint not null references energy_data.data_sources(id),\n  market_id bigint not null references energy_data.markets(id),\n  auction_code text not null,\n  delivery_start timestamptz not null,\n  delivery_end timestamptz not null,\n  price_eur_mwh numeric(14,6) not null,\n  currency char(3) not null default 'EUR',\n  source_series_name text not null,\n  first_observed_at timestamptz not null default now(),\n  last_observed_at timestamptz not null default now(),\n  ingested_at timestamptz not null default now(),\n  raw_payload_id bigint references energy_data.raw_api_payloads(id),\n  unique (source_id, market_id, auction_code, delivery_start, delivery_end),\n  constraint energy_charts_auction_code_chk\n    check (auction_code in ('day_ahead', 'ida1', 'ida2', 'ida3')),\n  constraint energy_charts_auction_window_chk\n    check (delivery_end = delivery_start + interval '15 minutes')\n);\n\ncreate index if not exists energy_charts_auction_market_time_idx\non energy_data.energy_charts_auction_prices\n  (market_id, auction_code, delivery_start desc);\n\ncreate index if not exists energy_charts_auction_observed_idx\non energy_data.energy_charts_auction_prices (last_observed_at desc);\n\ncreate or replace view energy_data.v_grafana_energy_charts_auctions as\nselect\n  p.delivery_start as \"time\",\n  p.delivery_start,\n  p.delivery_end,\n  p.auction_code,\n  p.price_eur_mwh,\n  p.currency,\n  p.source_series_name,\n  p.first_observed_at,\n  p.last_observed_at,\n  p.ingested_at,\n  s.code as source_code,\n  m.country_code,\n  m.bidding_zone,\n  m.timezone\nfrom energy_data.energy_charts_auction_prices p\njoin energy_data.data_sources s on s.id = p.source_id\njoin energy_data.markets m on m.id = p.market_id;\n\ncreate or replace view energy_data.v_energy_charts_auction_coverage as\nselect\n  p.auction_code,\n  count(*) as row_count,\n  min(p.delivery_start) as earliest_delivery,\n  max(p.delivery_end) as latest_delivery,\n  max(p.last_observed_at) as latest_source_check,\n  count(*) filter (\n    where (p.delivery_start at time zone m.timezone)::date =\n          (now() at time zone m.timezone)::date\n  ) as rows_today_berlin,\n  count(*) filter (\n    where (p.delivery_start at time zone m.timezone)::date =\n          ((now() at time zone m.timezone)::date + 1)\n  ) as rows_tomorrow_berlin\nfrom energy_data.energy_charts_auction_prices p\njoin energy_data.markets m on m.id = p.market_id\ngroup by p.auction_code;\n\ncommit;\n\nselect case\n  when to_regclass('energy_data.energy_charts_auction_prices') is not null\n   and to_regclass('energy_data.v_grafana_energy_charts_auctions') is not null\n   and to_regclass('energy_data.v_energy_charts_auction_coverage') is not null\n  then 'Migration 010 completed successfully'\n  else 'Migration 010 verification failed'\nend as migration_status;\n",
+        "options": {}
+      },
+      "id": "migration-010-postgres",
+      "name": "Apply Fraunhofer Auction Schema",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        580,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Run Migration 010 Manually": {
+      "main": [
+        [
+          {
+            "node": "Apply Fraunhofer Auction Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "00000000-0000-4000-8000-000000000010"
+}

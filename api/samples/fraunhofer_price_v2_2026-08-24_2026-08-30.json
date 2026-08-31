@@ -1,0 +1,4056 @@
+{
+  "schema_version": "2.0",
+  "endpoint": "price",
+  "country": "de",
+  "bidding_zone": "DE-LU",
+  "timezone": "Europe/Berlin",
+  "resolution": "PT15M",
+  "interval_minutes": 15,
+  "unit": "EUR / MWh",
+  "generated_at": "2026-08-31T07:49:45+02:00",
+  "available_from": "2026-08-24T00:00:00+02:00",
+  "available_until": "2026-08-30T23:45:00+02:00",
+  "series": [
+    {
+      "id": "day_ahead_price",
+      "name": "Day-ahead spot market price"
+    }
+  ],
+  "data": [
+    {
+      "timestamp": "2026-08-24T00:00:00+02:00",
+      "values": {
+        "day_ahead_price": 164.69
+      }
+    },
+    {
+      "timestamp": "2026-08-24T00:15:00+02:00",
+      "values": {
+        "day_ahead_price": 162.16
+      }
+    },
+    {
+      "timestamp": "2026-08-24T00:30:00+02:00",
+      "values": {
+        "day_ahead_price": 161.58
+      }
+    },
+    {
+      "timestamp": "2026-08-24T00:45:00+02:00",
+      "values": {
+        "day_ahead_price": 155.29
+      }
+    },
+    {
+      "timestamp": "2026-08-24T01:00:00+02:00",
+      "values": {
+        "day_ahead_price": 160.04
+      }
+    },
+    {
+      "timestamp": "2026-08-24T01:15:00+02:00",
+      "values": {
+        "day_ahead_price": 154.13
+      }
+    },
+    {
+      "timestamp": "2026-08-24T01:30:00+02:00",
+      "values": {
+        "day_ahead_price": 149.59
+      }
+    },
+    {
+      "timestamp": "2026-08-24T01:45:00+02:00",
+      "values": {
+        "day_ahead_price": 146.73
+      }
+    },
+    {
+      "timestamp": "2026-08-24T02:00:00+02:00",
+      "values": {
+        "day_ahead_price": 148.2
+      }
+    },
+    {
+      "timestamp": "2026-08-24T02:15:00+02:00",
+      "values": {
+        "day_ahead_price": 147.5
+      }
+    },
+    {
+      "timestamp": "2026-08-24T02:30:00+02:00",
+      "values": {
+        "day_ahead_price": 147.83
+      }
+    },
+    {
+      "timestamp": "2026-08-24T02:45:00+02:00",
+      "values": {
+        "day_ahead_price": 148
+      }
+    },
+    {
+      "timestamp": "2026-08-24T03:00:00+02:00",
+      "values": {
+        "day_ahead_price": 149.54
+      }
+    },
+    {
+      "timestamp": "2026-08-24T03:15:00+02:00",
+      "values": {
+        "day_ahead_price": 149.94
+      }
+    },
+    {
+      "timestamp": "2026-08-24T03:30:00+02:00",
+      "values": {
+        "day_ahead_price": 148.36
+      }
+    },
+    {
+      "timestamp": "2026-08-24T03:45:00+02:00",
+      "values": {
+        "day_ahead_price": 147.1
+      }
+    },
+    {
+      "timestamp": "2026-08-24T04:00:00+02:00",
+      "values": {
+        "day_ahead_price": 147.16
+      }
+    },
+    {
+      "timestamp": "2026-08-24T04:15:00+02:00",
+      "values": {
+        "day_ahead_price": 149
+      }
+    },
+    {
+      "timestamp": "2026-08-24T04:30:00+02:00",
+      "values": {
+        "day_ahead_price": 151.54
+      }
+    },
+    {
+      "timestamp": "2026-08-24T04:45:00+02:00",
+      "values": {
+        "day_ahead_price": 157.49
+      }
+    },
+    {
+      "timestamp": "2026-08-24T05:00:00+02:00",
+      "values": {
+        "day_ahead_price": 152.5
+      }
+    },
+    {
+      "timestamp": "2026-08-24T05:15:00+02:00",
+      "values": {
+        "day_ahead_price": 166.85
+      }
+    },
+    {
+      "timestamp": "2026-08-24T05:30:00+02:00",
+      "values": {
+        "day_ahead_price": 179.34
+      }
+    },
+    {
+      "timestamp": "2026-08-24T05:45:00+02:00",
+      "values": {
+        "day_ahead_price": 191.99
+      }
+    },
+    {
+      "timestamp": "2026-08-24T06:00:00+02:00",
+      "values": {
+        "day_ahead_price": 180.77
+      }
+    },
+    {
+      "timestamp": "2026-08-24T06:15:00+02:00",
+      "values": {
+        "day_ahead_price": 196.38
+      }
+    },
+    {
+      "timestamp": "2026-08-24T06:30:00+02:00",
+      "values": {
+        "day_ahead_price": 222.35
+      }
+    },
+    {
+      "timestamp": "2026-08-24T06:45:00+02:00",
+      "values": {
+        "day_ahead_price": 223.18
+      }
+    },
+    {
+      "timestamp": "2026-08-24T07:00:00+02:00",
+      "values": {
+        "day_ahead_price": 233.26
+      }
+    },
+    {
+      "timestamp": "2026-08-24T07:15:00+02:00",
+      "values": {
+        "day_ahead_price": 220.85
+      }
+    },
+    {
+      "timestamp": "2026-08-24T07:30:00+02:00",
+      "values": {
+        "day_ahead_price": 192.17
+      }
+    },
+    {
+      "timestamp": "2026-08-24T07:45:00+02:00",
+      "values": {
+        "day_ahead_price": 179.32
+      }
+    },
+    {
+      "timestamp": "2026-08-24T08:00:00+02:00",
+      "values": {
+        "day_ahead_price": 204.1
+      }
+    },
+    {
+      "timestamp": "2026-08-24T08:15:00+02:00",
+      "values": {
+        "day_ahead_price": 180.13
+      }
+    },
+    {
+      "timestamp": "2026-08-24T08:30:00+02:00",
+      "values": {
+        "day_ahead_price": 170.39
+      }
+    },
+    {
+      "timestamp": "2026-08-24T08:45:00+02:00",
+      "values": {
+        "day_ahead_price": 152.5
+      }
+    },
+    {
+      "timestamp": "2026-08-24T09:00:00+02:00",
+      "values": {
+        "day_ahead_price": 175
+      }
+    },
+    {
+      "timestamp": "2026-08-24T09:15:00+02:00",
+      "values": {
+        "day_ahead_price": 150.19
+      }
+    },
+    {
+      "timestamp": "2026-08-24T09:30:00+02:00",
+      "values": {
+        "day_ahead_price": 126.7
+      }
+    },
+    {
+      "timestamp": "2026-08-24T09:45:00+02:00",
+      "values": {
+        "day_ahead_price": 113.49
+      }
+    },
+    {
+      "timestamp": "2026-08-24T10:00:00+02:00",
+      "values": {
+        "day_ahead_price": 136.35
+      }
+    },
+    {
+      "timestamp": "2026-08-24T10:15:00+02:00",
+      "values": {
+        "day_ahead_price": 119.76
+      }
+    },
+    {
+      "timestamp": "2026-08-24T10:30:00+02:00",
+      "values": {
+        "day_ahead_price": 110.24
+      }
+    },
+    {
+      "timestamp": "2026-08-24T10:45:00+02:00",
+      "values": {
+        "day_ahead_price": 83.94
+      }
+    },
+    {
+      "timestamp": "2026-08-24T11:00:00+02:00",
+      "values": {
+        "day_ahead_price": 104.54
+      }
+    },
+    {
+      "timestamp": "2026-08-24T11:15:00+02:00",
+      "values": {
+        "day_ahead_price": 82.3
+      }
+    },
+    {
+      "timestamp": "2026-08-24T11:30:00+02:00",
+      "values": {
+        "day_ahead_price": 74.15
+      }
+    },
+    {
+      "timestamp": "2026-08-24T11:45:00+02:00",
+      "values": {
+        "day_ahead_price": 60.05
+      }
+    },
+    {
+      "timestamp": "2026-08-24T12:00:00+02:00",
+      "values": {
+        "day_ahead_price": 62.04
+      }
+    },
+    {
+      "timestamp": "2026-08-24T12:15:00+02:00",
+      "values": {
+        "day_ahead_price": 52.84
+      }
+    },
+    {
+      "timestamp": "2026-08-24T12:30:00+02:00",
+      "values": {
+        "day_ahead_price": 57.68
+      }
+    },
+    {
+      "timestamp": "2026-08-24T12:45:00+02:00",
+      "values": {
+        "day_ahead_price": 49.97
+      }
+    },
+    {
+      "timestamp": "2026-08-24T13:00:00+02:00",
+      "values": {
+        "day_ahead_price": 48.81
+      }
+    },
+    {
+      "timestamp": "2026-08-24T13:15:00+02:00",
+      "values": {
+        "day_ahead_price": 40.64
+      }
+    },
+    {
+      "timestamp": "2026-08-24T13:30:00+02:00",
+      "values": {
+        "day_ahead_price": 27
+      }
+    },
+    {
+      "timestamp": "2026-08-24T13:45:00+02:00",
+      "values": {
+        "day_ahead_price": 20.13
+      }
+    },
+    {
+      "timestamp": "2026-08-24T14:00:00+02:00",
+      "values": {
+        "day_ahead_price": 31.67
+      }
+    },
+    {
+      "timestamp": "2026-08-24T14:15:00+02:00",
+      "values": {
+        "day_ahead_price": 39.89
+      }
+    },
+    {
+      "timestamp": "2026-08-24T14:30:00+02:00",
+      "values": {
+        "day_ahead_price": 33.63
+      }
+    },
+    {
+      "timestamp": "2026-08-24T14:45:00+02:00",
+      "values": {
+        "day_ahead_price": 37.44
+      }
+    },
+    {
+      "timestamp": "2026-08-24T15:00:00+02:00",
+      "values": {
+        "day_ahead_price": 50.24
+      }
+    },
+    {
+      "timestamp": "2026-08-24T15:15:00+02:00",
+      "values": {
+        "day_ahead_price": 59.01
+      }
+    },
+    {
+      "timestamp": "2026-08-24T15:30:00+02:00",
+      "values": {
+        "day_ahead_price": 84.32
+      }
+    },
+    {
+      "timestamp": "2026-08-24T15:45:00+02:00",
+      "values": {
+        "day_ahead_price": 96.42
+      }
+    },
+    {
+      "timestamp": "2026-08-24T16:00:00+02:00",
+      "values": {
+        "day_ahead_price": 71.89
+      }
+    },
+    {
+      "timestamp": "2026-08-24T16:15:00+02:00",
+      "values": {
+        "day_ahead_price": 99.39
+      }
+    },
+    {
+      "timestamp": "2026-08-24T16:30:00+02:00",
+      "values": {
+        "day_ahead_price": 110.25
+      }
+    },
+    {
+      "timestamp": "2026-08-24T16:45:00+02:00",
+      "values": {
+        "day_ahead_price": 126.82
+      }
+    },
+    {
+      "timestamp": "2026-08-24T17:00:00+02:00",
+      "values": {
+        "day_ahead_price": 112.65
+      }
+    },
+    {
+      "timestamp": "2026-08-24T17:15:00+02:00",
+      "values": {
+        "day_ahead_price": 130.4
+      }
+    },
+    {
+      "timestamp": "2026-08-24T17:30:00+02:00",
+      "values": {
+        "day_ahead_price": 156.43
+      }
+    },
+    {
+      "timestamp": "2026-08-24T17:45:00+02:00",
+      "values": {
+        "day_ahead_price": 174.36
+      }
+    },
+    {
+      "timestamp": "2026-08-24T18:00:00+02:00",
+      "values": {
+        "day_ahead_price": 155.96
+      }
+    },
+    {
+      "timestamp": "2026-08-24T18:15:00+02:00",
+      "values": {
+        "day_ahead_price": 173.53
+      }
+    },
+    {
+      "timestamp": "2026-08-24T18:30:00+02:00",
+      "values": {
+        "day_ahead_price": 184.38
+      }
+    },
+    {
+      "timestamp": "2026-08-24T18:45:00+02:00",
+      "values": {
+        "day_ahead_price": 215.47
+      }
+    },
+    {
+      "timestamp": "2026-08-24T19:00:00+02:00",
+      "values": {
+        "day_ahead_price": 188.3
+      }
+    },
+    {
+      "timestamp": "2026-08-24T19:15:00+02:00",
+      "values": {
+        "day_ahead_price": 209.39
+      }
+    },
+    {
+      "timestamp": "2026-08-24T19:30:00+02:00",
+      "values": {
+        "day_ahead_price": 229.87
+      }
+    },
+    {
+      "timestamp": "2026-08-24T19:45:00+02:00",
+      "values": {
+        "day_ahead_price": 249.92
+      }
+    },
+    {
+      "timestamp": "2026-08-24T20:00:00+02:00",
+      "values": {
+        "day_ahead_price": 239.9
+      }
+    },
+    {
+      "timestamp": "2026-08-24T20:15:00+02:00",
+      "values": {
+        "day_ahead_price": 224.86
+      }
+    },
+    {
+      "timestamp": "2026-08-24T20:30:00+02:00",
+      "values": {
+        "day_ahead_price": 216.36
+      }
+    },
+    {
+      "timestamp": "2026-08-24T20:45:00+02:00",
+      "values": {
+        "day_ahead_price": 196.99
+      }
+    },
+    {
+      "timestamp": "2026-08-24T21:00:00+02:00",
+      "values": {
+        "day_ahead_price": 199
+      }
+    },
+    {
+      "timestamp": "2026-08-24T21:15:00+02:00",
+      "values": {
+        "day_ahead_price": 193.23
+      }
+    },
+    {
+      "timestamp": "2026-08-24T21:30:00+02:00",
+      "values": {
+        "day_ahead_price": 183.05
+      }
+    },
+    {
+      "timestamp": "2026-08-24T21:45:00+02:00",
+      "values": {
+        "day_ahead_price": 176.83
+      }
+    },
+    {
+      "timestamp": "2026-08-24T22:00:00+02:00",
+      "values": {
+        "day_ahead_price": 176.54
+      }
+    },
+    {
+      "timestamp": "2026-08-24T22:15:00+02:00",
+      "values": {
+        "day_ahead_price": 173.52
+      }
+    },
+    {
+      "timestamp": "2026-08-24T22:30:00+02:00",
+      "values": {
+        "day_ahead_price": 169.99
+      }
+    },
+    {
+      "timestamp": "2026-08-24T22:45:00+02:00",
+      "values": {
+        "day_ahead_price": 167.05
+      }
+    },
+    {
+      "timestamp": "2026-08-24T23:00:00+02:00",
+      "values": {
+        "day_ahead_price": 163.19
+      }
+    },
+    {
+      "timestamp": "2026-08-24T23:15:00+02:00",
+      "values": {
+        "day_ahead_price": 157.08
+      }
+    },
+    {
+      "timestamp": "2026-08-24T23:30:00+02:00",
+      "values": {
+        "day_ahead_price": 154.12
+      }
+    },
+    {
+      "timestamp": "2026-08-24T23:45:00+02:00",
+      "values": {
+        "day_ahead_price": 144.51
+      }
+    },
+    {
+      "timestamp": "2026-08-25T00:00:00+02:00",
+      "values": {
+        "day_ahead_price": 155.82
+      }
+    },
+    {
+      "timestamp": "2026-08-25T00:15:00+02:00",
+      "values": {
+        "day_ahead_price": 154.66
+      }
+    },
+    {
+      "timestamp": "2026-08-25T00:30:00+02:00",
+      "values": {
+        "day_ahead_price": 151.45
+      }
+    },
+    {
+      "timestamp": "2026-08-25T00:45:00+02:00",
+      "values": {
+        "day_ahead_price": 147.43
+      }
+    },
+    {
+      "timestamp": "2026-08-25T01:00:00+02:00",
+      "values": {
+        "day_ahead_price": 152.74
+      }
+    },
+    {
+      "timestamp": "2026-08-25T01:15:00+02:00",
+      "values": {
+        "day_ahead_price": 145.42
+      }
+    },
+    {
+      "timestamp": "2026-08-25T01:30:00+02:00",
+      "values": {
+        "day_ahead_price": 144.74
+      }
+    },
+    {
+      "timestamp": "2026-08-25T01:45:00+02:00",
+      "values": {
+        "day_ahead_price": 144.4
+      }
+    },
+    {
+      "timestamp": "2026-08-25T02:00:00+02:00",
+      "values": {
+        "day_ahead_price": 144.01
+      }
+    },
+    {
+      "timestamp": "2026-08-25T02:15:00+02:00",
+      "values": {
+        "day_ahead_price": 141.92
+      }
+    },
+    {
+      "timestamp": "2026-08-25T02:30:00+02:00",
+      "values": {
+        "day_ahead_price": 142.19
+      }
+    },
+    {
+      "timestamp": "2026-08-25T02:45:00+02:00",
+      "values": {
+        "day_ahead_price": 141.54
+      }
+    },
+    {
+      "timestamp": "2026-08-25T03:00:00+02:00",
+      "values": {
+        "day_ahead_price": 139.87
+      }
+    },
+    {
+      "timestamp": "2026-08-25T03:15:00+02:00",
+      "values": {
+        "day_ahead_price": 139.8
+      }
+    },
+    {
+      "timestamp": "2026-08-25T03:30:00+02:00",
+      "values": {
+        "day_ahead_price": 139.86
+      }
+    },
+    {
+      "timestamp": "2026-08-25T03:45:00+02:00",
+      "values": {
+        "day_ahead_price": 140.49
+      }
+    },
+    {
+      "timestamp": "2026-08-25T04:00:00+02:00",
+      "values": {
+        "day_ahead_price": 139.94
+      }
+    },
+    {
+      "timestamp": "2026-08-25T04:15:00+02:00",
+      "values": {
+        "day_ahead_price": 141
+      }
+    },
+    {
+      "timestamp": "2026-08-25T04:30:00+02:00",
+      "values": {
+        "day_ahead_price": 141.55
+      }
+    },
+    {
+      "timestamp": "2026-08-25T04:45:00+02:00",
+      "values": {
+        "day_ahead_price": 143.99
+      }
+    },
+    {
+      "timestamp": "2026-08-25T05:00:00+02:00",
+      "values": {
+        "day_ahead_price": 144.99
+      }
+    },
+    {
+      "timestamp": "2026-08-25T05:15:00+02:00",
+      "values": {
+        "day_ahead_price": 145.66
+      }
+    },
+    {
+      "timestamp": "2026-08-25T05:30:00+02:00",
+      "values": {
+        "day_ahead_price": 150.6
+      }
+    },
+    {
+      "timestamp": "2026-08-25T05:45:00+02:00",
+      "values": {
+        "day_ahead_price": 157.07
+      }
+    },
+    {
+      "timestamp": "2026-08-25T06:00:00+02:00",
+      "values": {
+        "day_ahead_price": 164.7
+      }
+    },
+    {
+      "timestamp": "2026-08-25T06:15:00+02:00",
+      "values": {
+        "day_ahead_price": 170.99
+      }
+    },
+    {
+      "timestamp": "2026-08-25T06:30:00+02:00",
+      "values": {
+        "day_ahead_price": 173.37
+      }
+    },
+    {
+      "timestamp": "2026-08-25T06:45:00+02:00",
+      "values": {
+        "day_ahead_price": 176.6
+      }
+    },
+    {
+      "timestamp": "2026-08-25T07:00:00+02:00",
+      "values": {
+        "day_ahead_price": 184.84
+      }
+    },
+    {
+      "timestamp": "2026-08-25T07:15:00+02:00",
+      "values": {
+        "day_ahead_price": 185.05
+      }
+    },
+    {
+      "timestamp": "2026-08-25T07:30:00+02:00",
+      "values": {
+        "day_ahead_price": 181.76
+      }
+    },
+    {
+      "timestamp": "2026-08-25T07:45:00+02:00",
+      "values": {
+        "day_ahead_price": 170.99
+      }
+    },
+    {
+      "timestamp": "2026-08-25T08:00:00+02:00",
+      "values": {
+        "day_ahead_price": 187.63
+      }
+    },
+    {
+      "timestamp": "2026-08-25T08:15:00+02:00",
+      "values": {
+        "day_ahead_price": 173.97
+      }
+    },
+    {
+      "timestamp": "2026-08-25T08:30:00+02:00",
+      "values": {
+        "day_ahead_price": 166.16
+      }
+    },
+    {
+      "timestamp": "2026-08-25T08:45:00+02:00",
+      "values": {
+        "day_ahead_price": 157.86
+      }
+    },
+    {
+      "timestamp": "2026-08-25T09:00:00+02:00",
+      "values": {
+        "day_ahead_price": 165.47
+      }
+    },
+    {
+      "timestamp": "2026-08-25T09:15:00+02:00",
+      "values": {
+        "day_ahead_price": 152.68
+      }
+    },
+    {
+      "timestamp": "2026-08-25T09:30:00+02:00",
+      "values": {
+        "day_ahead_price": 135.91
+      }
+    },
+    {
+      "timestamp": "2026-08-25T09:45:00+02:00",
+      "values": {
+        "day_ahead_price": 127.69
+      }
+    },
+    {
+      "timestamp": "2026-08-25T10:00:00+02:00",
+      "values": {
+        "day_ahead_price": 140.49
+      }
+    },
+    {
+      "timestamp": "2026-08-25T10:15:00+02:00",
+      "values": {
+        "day_ahead_price": 122.67
+      }
+    },
+    {
+      "timestamp": "2026-08-25T10:30:00+02:00",
+      "values": {
+        "day_ahead_price": 113
+      }
+    },
+    {
+      "timestamp": "2026-08-25T10:45:00+02:00",
+      "values": {
+        "day_ahead_price": 93.68
+      }
+    },
+    {
+      "timestamp": "2026-08-25T11:00:00+02:00",
+      "values": {
+        "day_ahead_price": 108.4
+      }
+    },
+    {
+      "timestamp": "2026-08-25T11:15:00+02:00",
+      "values": {
+        "day_ahead_price": 92.72
+      }
+    },
+    {
+      "timestamp": "2026-08-25T11:30:00+02:00",
+      "values": {
+        "day_ahead_price": 72.98
+      }
+    },
+    {
+      "timestamp": "2026-08-25T11:45:00+02:00",
+      "values": {
+        "day_ahead_price": 58.48
+      }
+    },
+    {
+      "timestamp": "2026-08-25T12:00:00+02:00",
+      "values": {
+        "day_ahead_price": 79.08
+      }
+    },
+    {
+      "timestamp": "2026-08-25T12:15:00+02:00",
+      "values": {
+        "day_ahead_price": 62.6
+      }
+    },
+    {
+      "timestamp": "2026-08-25T12:30:00+02:00",
+      "values": {
+        "day_ahead_price": 67.03
+      }
+    },
+    {
+      "timestamp": "2026-08-25T12:45:00+02:00",
+      "values": {
+        "day_ahead_price": 59.92
+      }
+    },
+    {
+      "timestamp": "2026-08-25T13:00:00+02:00",
+      "values": {
+        "day_ahead_price": 69.99
+      }
+    },
+    {
+      "timestamp": "2026-08-25T13:15:00+02:00",
+      "values": {
+        "day_ahead_price": 62.38
+      }
+    },
+    {
+      "timestamp": "2026-08-25T13:30:00+02:00",
+      "values": {
+        "day_ahead_price": 58.53
+      }
+    },
+    {
+      "timestamp": "2026-08-25T13:45:00+02:00",
+      "values": {
+        "day_ahead_price": 57.93
+      }
+    },
+    {
+      "timestamp": "2026-08-25T14:00:00+02:00",
+      "values": {
+        "day_ahead_price": 56.63
+      }
+    },
+    {
+      "timestamp": "2026-08-25T14:15:00+02:00",
+      "values": {
+        "day_ahead_price": 60.02
+      }
+    },
+    {
+      "timestamp": "2026-08-25T14:30:00+02:00",
+      "values": {
+        "day_ahead_price": 73.79
+      }
+    },
+    {
+      "timestamp": "2026-08-25T14:45:00+02:00",
+      "values": {
+        "day_ahead_price": 83.41
+      }
+    },
+    {
+      "timestamp": "2026-08-25T15:00:00+02:00",
+      "values": {
+        "day_ahead_price": 67.26
+      }
+    },
+    {
+      "timestamp": "2026-08-25T15:15:00+02:00",
+      "values": {
+        "day_ahead_price": 78.57
+      }
+    },
+    {
+      "timestamp": "2026-08-25T15:30:00+02:00",
+      "values": {
+        "day_ahead_price": 92.24
+      }
+    },
+    {
+      "timestamp": "2026-08-25T15:45:00+02:00",
+      "values": {
+        "day_ahead_price": 101.92
+      }
+    },
+    {
+      "timestamp": "2026-08-25T16:00:00+02:00",
+      "values": {
+        "day_ahead_price": 91.07
+      }
+    },
+    {
+      "timestamp": "2026-08-25T16:15:00+02:00",
+      "values": {
+        "day_ahead_price": 111.5
+      }
+    },
+    {
+      "timestamp": "2026-08-25T16:30:00+02:00",
+      "values": {
+        "day_ahead_price": 118.01
+      }
+    },
+    {
+      "timestamp": "2026-08-25T16:45:00+02:00",
+      "values": {
+        "day_ahead_price": 137.03
+      }
+    },
+    {
+      "timestamp": "2026-08-25T17:00:00+02:00",
+      "values": {
+        "day_ahead_price": 118.68
+      }
+    },
+    {
+      "timestamp": "2026-08-25T17:15:00+02:00",
+      "values": {
+        "day_ahead_price": 138.7
+      }
+    },
+    {
+      "timestamp": "2026-08-25T17:30:00+02:00",
+      "values": {
+        "day_ahead_price": 159.85
+      }
+    },
+    {
+      "timestamp": "2026-08-25T17:45:00+02:00",
+      "values": {
+        "day_ahead_price": 170.98
+      }
+    },
+    {
+      "timestamp": "2026-08-25T18:00:00+02:00",
+      "values": {
+        "day_ahead_price": 154.99
+      }
+    },
+    {
+      "timestamp": "2026-08-25T18:15:00+02:00",
+      "values": {
+        "day_ahead_price": 172
+      }
+    },
+    {
+      "timestamp": "2026-08-25T18:30:00+02:00",
+      "values": {
+        "day_ahead_price": 186.91
+      }
+    },
+    {
+      "timestamp": "2026-08-25T18:45:00+02:00",
+      "values": {
+        "day_ahead_price": 201.23
+      }
+    },
+    {
+      "timestamp": "2026-08-25T19:00:00+02:00",
+      "values": {
+        "day_ahead_price": 193.07
+      }
+    },
+    {
+      "timestamp": "2026-08-25T19:15:00+02:00",
+      "values": {
+        "day_ahead_price": 205.65
+      }
+    },
+    {
+      "timestamp": "2026-08-25T19:30:00+02:00",
+      "values": {
+        "day_ahead_price": 219.86
+      }
+    },
+    {
+      "timestamp": "2026-08-25T19:45:00+02:00",
+      "values": {
+        "day_ahead_price": 218.65
+      }
+    },
+    {
+      "timestamp": "2026-08-25T20:00:00+02:00",
+      "values": {
+        "day_ahead_price": 200.32
+      }
+    },
+    {
+      "timestamp": "2026-08-25T20:15:00+02:00",
+      "values": {
+        "day_ahead_price": 212.58
+      }
+    },
+    {
+      "timestamp": "2026-08-25T20:30:00+02:00",
+      "values": {
+        "day_ahead_price": 211.73
+      }
+    },
+    {
+      "timestamp": "2026-08-25T20:45:00+02:00",
+      "values": {
+        "day_ahead_price": 195.94
+      }
+    },
+    {
+      "timestamp": "2026-08-25T21:00:00+02:00",
+      "values": {
+        "day_ahead_price": 192.1
+      }
+    },
+    {
+      "timestamp": "2026-08-25T21:15:00+02:00",
+      "values": {
+        "day_ahead_price": 186.95
+      }
+    },
+    {
+      "timestamp": "2026-08-25T21:30:00+02:00",
+      "values": {
+        "day_ahead_price": 178.93
+      }
+    },
+    {
+      "timestamp": "2026-08-25T21:45:00+02:00",
+      "values": {
+        "day_ahead_price": 171.99
+      }
+    },
+    {
+      "timestamp": "2026-08-25T22:00:00+02:00",
+      "values": {
+        "day_ahead_price": 175.87
+      }
+    },
+    {
+      "timestamp": "2026-08-25T22:15:00+02:00",
+      "values": {
+        "day_ahead_price": 172.57
+      }
+    },
+    {
+      "timestamp": "2026-08-25T22:30:00+02:00",
+      "values": {
+        "day_ahead_price": 176.25
+      }
+    },
+    {
+      "timestamp": "2026-08-25T22:45:00+02:00",
+      "values": {
+        "day_ahead_price": 164.38
+      }
+    },
+    {
+      "timestamp": "2026-08-25T23:00:00+02:00",
+      "values": {
+        "day_ahead_price": 167.84
+      }
+    },
+    {
+      "timestamp": "2026-08-25T23:15:00+02:00",
+      "values": {
+        "day_ahead_price": 161.33
+      }
+    },
+    {
+      "timestamp": "2026-08-25T23:30:00+02:00",
+      "values": {
+        "day_ahead_price": 161.29
+      }
+    },
+    {
+      "timestamp": "2026-08-25T23:45:00+02:00",
+      "values": {
+        "day_ahead_price": 148.18
+      }
+    },
+    {
+      "timestamp": "2026-08-26T00:00:00+02:00",
+      "values": {
+        "day_ahead_price": 180.19
+      }
+    },
+    {
+      "timestamp": "2026-08-26T00:15:00+02:00",
+      "values": {
+        "day_ahead_price": 165.74
+      }
+    },
+    {
+      "timestamp": "2026-08-26T00:30:00+02:00",
+      "values": {
+        "day_ahead_price": 157.29
+      }
+    },
+    {
+      "timestamp": "2026-08-26T00:45:00+02:00",
+      "values": {
+        "day_ahead_price": 152.89
+      }
+    },
+    {
+      "timestamp": "2026-08-26T01:00:00+02:00",
+      "values": {
+        "day_ahead_price": 161.06
+      }
+    },
+    {
+      "timestamp": "2026-08-26T01:15:00+02:00",
+      "values": {
+        "day_ahead_price": 156.44
+      }
+    },
+    {
+      "timestamp": "2026-08-26T01:30:00+02:00",
+      "values": {
+        "day_ahead_price": 156.64
+      }
+    },
+    {
+      "timestamp": "2026-08-26T01:45:00+02:00",
+      "values": {
+        "day_ahead_price": 154.09
+      }
+    },
+    {
+      "timestamp": "2026-08-26T02:00:00+02:00",
+      "values": {
+        "day_ahead_price": 152.29
+      }
+    },
+    {
+      "timestamp": "2026-08-26T02:15:00+02:00",
+      "values": {
+        "day_ahead_price": 151.95
+      }
+    },
+    {
+      "timestamp": "2026-08-26T02:30:00+02:00",
+      "values": {
+        "day_ahead_price": 151.23
+      }
+    },
+    {
+      "timestamp": "2026-08-26T02:45:00+02:00",
+      "values": {
+        "day_ahead_price": 151.1
+      }
+    },
+    {
+      "timestamp": "2026-08-26T03:00:00+02:00",
+      "values": {
+        "day_ahead_price": 149.78
+      }
+    },
+    {
+      "timestamp": "2026-08-26T03:15:00+02:00",
+      "values": {
+        "day_ahead_price": 148.95
+      }
+    },
+    {
+      "timestamp": "2026-08-26T03:30:00+02:00",
+      "values": {
+        "day_ahead_price": 150.01
+      }
+    },
+    {
+      "timestamp": "2026-08-26T03:45:00+02:00",
+      "values": {
+        "day_ahead_price": 149.66
+      }
+    },
+    {
+      "timestamp": "2026-08-26T04:00:00+02:00",
+      "values": {
+        "day_ahead_price": 149.86
+      }
+    },
+    {
+      "timestamp": "2026-08-26T04:15:00+02:00",
+      "values": {
+        "day_ahead_price": 150.39
+      }
+    },
+    {
+      "timestamp": "2026-08-26T04:30:00+02:00",
+      "values": {
+        "day_ahead_price": 151.95
+      }
+    },
+    {
+      "timestamp": "2026-08-26T04:45:00+02:00",
+      "values": {
+        "day_ahead_price": 154.83
+      }
+    },
+    {
+      "timestamp": "2026-08-26T05:00:00+02:00",
+      "values": {
+        "day_ahead_price": 150.58
+      }
+    },
+    {
+      "timestamp": "2026-08-26T05:15:00+02:00",
+      "values": {
+        "day_ahead_price": 156.97
+      }
+    },
+    {
+      "timestamp": "2026-08-26T05:30:00+02:00",
+      "values": {
+        "day_ahead_price": 163.26
+      }
+    },
+    {
+      "timestamp": "2026-08-26T05:45:00+02:00",
+      "values": {
+        "day_ahead_price": 171.05
+      }
+    },
+    {
+      "timestamp": "2026-08-26T06:00:00+02:00",
+      "values": {
+        "day_ahead_price": 173.79
+      }
+    },
+    {
+      "timestamp": "2026-08-26T06:15:00+02:00",
+      "values": {
+        "day_ahead_price": 185.5
+      }
+    },
+    {
+      "timestamp": "2026-08-26T06:30:00+02:00",
+      "values": {
+        "day_ahead_price": 190.07
+      }
+    },
+    {
+      "timestamp": "2026-08-26T06:45:00+02:00",
+      "values": {
+        "day_ahead_price": 191.16
+      }
+    },
+    {
+      "timestamp": "2026-08-26T07:00:00+02:00",
+      "values": {
+        "day_ahead_price": 199.35
+      }
+    },
+    {
+      "timestamp": "2026-08-26T07:15:00+02:00",
+      "values": {
+        "day_ahead_price": 198.92
+      }
+    },
+    {
+      "timestamp": "2026-08-26T07:30:00+02:00",
+      "values": {
+        "day_ahead_price": 194.48
+      }
+    },
+    {
+      "timestamp": "2026-08-26T07:45:00+02:00",
+      "values": {
+        "day_ahead_price": 189.4
+      }
+    },
+    {
+      "timestamp": "2026-08-26T08:00:00+02:00",
+      "values": {
+        "day_ahead_price": 212.12
+      }
+    },
+    {
+      "timestamp": "2026-08-26T08:15:00+02:00",
+      "values": {
+        "day_ahead_price": 204.49
+      }
+    },
+    {
+      "timestamp": "2026-08-26T08:30:00+02:00",
+      "values": {
+        "day_ahead_price": 186.55
+      }
+    },
+    {
+      "timestamp": "2026-08-26T08:45:00+02:00",
+      "values": {
+        "day_ahead_price": 170.92
+      }
+    },
+    {
+      "timestamp": "2026-08-26T09:00:00+02:00",
+      "values": {
+        "day_ahead_price": 191.26
+      }
+    },
+    {
+      "timestamp": "2026-08-26T09:15:00+02:00",
+      "values": {
+        "day_ahead_price": 173.42
+      }
+    },
+    {
+      "timestamp": "2026-08-26T09:30:00+02:00",
+      "values": {
+        "day_ahead_price": 157.54
+      }
+    },
+    {
+      "timestamp": "2026-08-26T09:45:00+02:00",
+      "values": {
+        "day_ahead_price": 144.27
+      }
+    },
+    {
+      "timestamp": "2026-08-26T10:00:00+02:00",
+      "values": {
+        "day_ahead_price": 165.21
+      }
+    },
+    {
+      "timestamp": "2026-08-26T10:15:00+02:00",
+      "values": {
+        "day_ahead_price": 135.93
+      }
+    },
+    {
+      "timestamp": "2026-08-26T10:30:00+02:00",
+      "values": {
+        "day_ahead_price": 128.23
+      }
+    },
+    {
+      "timestamp": "2026-08-26T10:45:00+02:00",
+      "values": {
+        "day_ahead_price": 120.55
+      }
+    },
+    {
+      "timestamp": "2026-08-26T11:00:00+02:00",
+      "values": {
+        "day_ahead_price": 132.06
+      }
+    },
+    {
+      "timestamp": "2026-08-26T11:15:00+02:00",
+      "values": {
+        "day_ahead_price": 125.1
+      }
+    },
+    {
+      "timestamp": "2026-08-26T11:30:00+02:00",
+      "values": {
+        "day_ahead_price": 119.8
+      }
+    },
+    {
+      "timestamp": "2026-08-26T11:45:00+02:00",
+      "values": {
+        "day_ahead_price": 105.68
+      }
+    },
+    {
+      "timestamp": "2026-08-26T12:00:00+02:00",
+      "values": {
+        "day_ahead_price": 112.77
+      }
+    },
+    {
+      "timestamp": "2026-08-26T12:15:00+02:00",
+      "values": {
+        "day_ahead_price": 94.25
+      }
+    },
+    {
+      "timestamp": "2026-08-26T12:30:00+02:00",
+      "values": {
+        "day_ahead_price": 97.47
+      }
+    },
+    {
+      "timestamp": "2026-08-26T12:45:00+02:00",
+      "values": {
+        "day_ahead_price": 89.93
+      }
+    },
+    {
+      "timestamp": "2026-08-26T13:00:00+02:00",
+      "values": {
+        "day_ahead_price": 101.01
+      }
+    },
+    {
+      "timestamp": "2026-08-26T13:15:00+02:00",
+      "values": {
+        "day_ahead_price": 91.06
+      }
+    },
+    {
+      "timestamp": "2026-08-26T13:30:00+02:00",
+      "values": {
+        "day_ahead_price": 85.01
+      }
+    },
+    {
+      "timestamp": "2026-08-26T13:45:00+02:00",
+      "values": {
+        "day_ahead_price": 81.08
+      }
+    },
+    {
+      "timestamp": "2026-08-26T14:00:00+02:00",
+      "values": {
+        "day_ahead_price": 90.48
+      }
+    },
+    {
+      "timestamp": "2026-08-26T14:15:00+02:00",
+      "values": {
+        "day_ahead_price": 90.76
+      }
+    },
+    {
+      "timestamp": "2026-08-26T14:30:00+02:00",
+      "values": {
+        "day_ahead_price": 91.87
+      }
+    },
+    {
+      "timestamp": "2026-08-26T14:45:00+02:00",
+      "values": {
+        "day_ahead_price": 94.77
+      }
+    },
+    {
+      "timestamp": "2026-08-26T15:00:00+02:00",
+      "values": {
+        "day_ahead_price": 93.62
+      }
+    },
+    {
+      "timestamp": "2026-08-26T15:15:00+02:00",
+      "values": {
+        "day_ahead_price": 100.66
+      }
+    },
+    {
+      "timestamp": "2026-08-26T15:30:00+02:00",
+      "values": {
+        "day_ahead_price": 104.3
+      }
+    },
+    {
+      "timestamp": "2026-08-26T15:45:00+02:00",
+      "values": {
+        "day_ahead_price": 111.63
+      }
+    },
+    {
+      "timestamp": "2026-08-26T16:00:00+02:00",
+      "values": {
+        "day_ahead_price": 108.35
+      }
+    },
+    {
+      "timestamp": "2026-08-26T16:15:00+02:00",
+      "values": {
+        "day_ahead_price": 117.55
+      }
+    },
+    {
+      "timestamp": "2026-08-26T16:30:00+02:00",
+      "values": {
+        "day_ahead_price": 122.93
+      }
+    },
+    {
+      "timestamp": "2026-08-26T16:45:00+02:00",
+      "values": {
+        "day_ahead_price": 141.2
+      }
+    },
+    {
+      "timestamp": "2026-08-26T17:00:00+02:00",
+      "values": {
+        "day_ahead_price": 125.31
+      }
+    },
+    {
+      "timestamp": "2026-08-26T17:15:00+02:00",
+      "values": {
+        "day_ahead_price": 149.7
+      }
+    },
+    {
+      "timestamp": "2026-08-26T17:30:00+02:00",
+      "values": {
+        "day_ahead_price": 173
+      }
+    },
+    {
+      "timestamp": "2026-08-26T17:45:00+02:00",
+      "values": {
+        "day_ahead_price": 179.87
+      }
+    },
+    {
+      "timestamp": "2026-08-26T18:00:00+02:00",
+      "values": {
+        "day_ahead_price": 160.51
+      }
+    },
+    {
+      "timestamp": "2026-08-26T18:15:00+02:00",
+      "values": {
+        "day_ahead_price": 173.58
+      }
+    },
+    {
+      "timestamp": "2026-08-26T18:30:00+02:00",
+      "values": {
+        "day_ahead_price": 191.78
+      }
+    },
+    {
+      "timestamp": "2026-08-26T18:45:00+02:00",
+      "values": {
+        "day_ahead_price": 216.63
+      }
+    },
+    {
+      "timestamp": "2026-08-26T19:00:00+02:00",
+      "values": {
+        "day_ahead_price": 193.34
+      }
+    },
+    {
+      "timestamp": "2026-08-26T19:15:00+02:00",
+      "values": {
+        "day_ahead_price": 206.64
+      }
+    },
+    {
+      "timestamp": "2026-08-26T19:30:00+02:00",
+      "values": {
+        "day_ahead_price": 218.91
+      }
+    },
+    {
+      "timestamp": "2026-08-26T19:45:00+02:00",
+      "values": {
+        "day_ahead_price": 226.09
+      }
+    },
+    {
+      "timestamp": "2026-08-26T20:00:00+02:00",
+      "values": {
+        "day_ahead_price": 218.8
+      }
+    },
+    {
+      "timestamp": "2026-08-26T20:15:00+02:00",
+      "values": {
+        "day_ahead_price": 206.45
+      }
+    },
+    {
+      "timestamp": "2026-08-26T20:30:00+02:00",
+      "values": {
+        "day_ahead_price": 195.66
+      }
+    },
+    {
+      "timestamp": "2026-08-26T20:45:00+02:00",
+      "values": {
+        "day_ahead_price": 186.2
+      }
+    },
+    {
+      "timestamp": "2026-08-26T21:00:00+02:00",
+      "values": {
+        "day_ahead_price": 188.82
+      }
+    },
+    {
+      "timestamp": "2026-08-26T21:15:00+02:00",
+      "values": {
+        "day_ahead_price": 180.72
+      }
+    },
+    {
+      "timestamp": "2026-08-26T21:30:00+02:00",
+      "values": {
+        "day_ahead_price": 177.31
+      }
+    },
+    {
+      "timestamp": "2026-08-26T21:45:00+02:00",
+      "values": {
+        "day_ahead_price": 167.92
+      }
+    },
+    {
+      "timestamp": "2026-08-26T22:00:00+02:00",
+      "values": {
+        "day_ahead_price": 172.29
+      }
+    },
+    {
+      "timestamp": "2026-08-26T22:15:00+02:00",
+      "values": {
+        "day_ahead_price": 165.95
+      }
+    },
+    {
+      "timestamp": "2026-08-26T22:30:00+02:00",
+      "values": {
+        "day_ahead_price": 164.16
+      }
+    },
+    {
+      "timestamp": "2026-08-26T22:45:00+02:00",
+      "values": {
+        "day_ahead_price": 151.95
+      }
+    },
+    {
+      "timestamp": "2026-08-26T23:00:00+02:00",
+      "values": {
+        "day_ahead_price": 161.94
+      }
+    },
+    {
+      "timestamp": "2026-08-26T23:15:00+02:00",
+      "values": {
+        "day_ahead_price": 152.79
+      }
+    },
+    {
+      "timestamp": "2026-08-26T23:30:00+02:00",
+      "values": {
+        "day_ahead_price": 150
+      }
+    },
+    {
+      "timestamp": "2026-08-26T23:45:00+02:00",
+      "values": {
+        "day_ahead_price": 139.72
+      }
+    },
+    {
+      "timestamp": "2026-08-27T00:00:00+02:00",
+      "values": {
+        "day_ahead_price": 155.22
+      }
+    },
+    {
+      "timestamp": "2026-08-27T00:15:00+02:00",
+      "values": {
+        "day_ahead_price": 149.8
+      }
+    },
+    {
+      "timestamp": "2026-08-27T00:30:00+02:00",
+      "values": {
+        "day_ahead_price": 147.17
+      }
+    },
+    {
+      "timestamp": "2026-08-27T00:45:00+02:00",
+      "values": {
+        "day_ahead_price": 142.03
+      }
+    },
+    {
+      "timestamp": "2026-08-27T01:00:00+02:00",
+      "values": {
+        "day_ahead_price": 149.56
+      }
+    },
+    {
+      "timestamp": "2026-08-27T01:15:00+02:00",
+      "values": {
+        "day_ahead_price": 142.95
+      }
+    },
+    {
+      "timestamp": "2026-08-27T01:30:00+02:00",
+      "values": {
+        "day_ahead_price": 141.73
+      }
+    },
+    {
+      "timestamp": "2026-08-27T01:45:00+02:00",
+      "values": {
+        "day_ahead_price": 134.46
+      }
+    },
+    {
+      "timestamp": "2026-08-27T02:00:00+02:00",
+      "values": {
+        "day_ahead_price": 138.69
+      }
+    },
+    {
+      "timestamp": "2026-08-27T02:15:00+02:00",
+      "values": {
+        "day_ahead_price": 134.86
+      }
+    },
+    {
+      "timestamp": "2026-08-27T02:30:00+02:00",
+      "values": {
+        "day_ahead_price": 134.18
+      }
+    },
+    {
+      "timestamp": "2026-08-27T02:45:00+02:00",
+      "values": {
+        "day_ahead_price": 132.95
+      }
+    },
+    {
+      "timestamp": "2026-08-27T03:00:00+02:00",
+      "values": {
+        "day_ahead_price": 135.43
+      }
+    },
+    {
+      "timestamp": "2026-08-27T03:15:00+02:00",
+      "values": {
+        "day_ahead_price": 134.02
+      }
+    },
+    {
+      "timestamp": "2026-08-27T03:30:00+02:00",
+      "values": {
+        "day_ahead_price": 134.31
+      }
+    },
+    {
+      "timestamp": "2026-08-27T03:45:00+02:00",
+      "values": {
+        "day_ahead_price": 133.93
+      }
+    },
+    {
+      "timestamp": "2026-08-27T04:00:00+02:00",
+      "values": {
+        "day_ahead_price": 133.7
+      }
+    },
+    {
+      "timestamp": "2026-08-27T04:15:00+02:00",
+      "values": {
+        "day_ahead_price": 134.13
+      }
+    },
+    {
+      "timestamp": "2026-08-27T04:30:00+02:00",
+      "values": {
+        "day_ahead_price": 136.66
+      }
+    },
+    {
+      "timestamp": "2026-08-27T04:45:00+02:00",
+      "values": {
+        "day_ahead_price": 140.27
+      }
+    },
+    {
+      "timestamp": "2026-08-27T05:00:00+02:00",
+      "values": {
+        "day_ahead_price": 139.14
+      }
+    },
+    {
+      "timestamp": "2026-08-27T05:15:00+02:00",
+      "values": {
+        "day_ahead_price": 139.4
+      }
+    },
+    {
+      "timestamp": "2026-08-27T05:30:00+02:00",
+      "values": {
+        "day_ahead_price": 147.27
+      }
+    },
+    {
+      "timestamp": "2026-08-27T05:45:00+02:00",
+      "values": {
+        "day_ahead_price": 160.43
+      }
+    },
+    {
+      "timestamp": "2026-08-27T06:00:00+02:00",
+      "values": {
+        "day_ahead_price": 160.45
+      }
+    },
+    {
+      "timestamp": "2026-08-27T06:15:00+02:00",
+      "values": {
+        "day_ahead_price": 169.22
+      }
+    },
+    {
+      "timestamp": "2026-08-27T06:30:00+02:00",
+      "values": {
+        "day_ahead_price": 170.35
+      }
+    },
+    {
+      "timestamp": "2026-08-27T06:45:00+02:00",
+      "values": {
+        "day_ahead_price": 170.31
+      }
+    },
+    {
+      "timestamp": "2026-08-27T07:00:00+02:00",
+      "values": {
+        "day_ahead_price": 176.04
+      }
+    },
+    {
+      "timestamp": "2026-08-27T07:15:00+02:00",
+      "values": {
+        "day_ahead_price": 176.34
+      }
+    },
+    {
+      "timestamp": "2026-08-27T07:30:00+02:00",
+      "values": {
+        "day_ahead_price": 174.79
+      }
+    },
+    {
+      "timestamp": "2026-08-27T07:45:00+02:00",
+      "values": {
+        "day_ahead_price": 169.41
+      }
+    },
+    {
+      "timestamp": "2026-08-27T08:00:00+02:00",
+      "values": {
+        "day_ahead_price": 176.02
+      }
+    },
+    {
+      "timestamp": "2026-08-27T08:15:00+02:00",
+      "values": {
+        "day_ahead_price": 170.22
+      }
+    },
+    {
+      "timestamp": "2026-08-27T08:30:00+02:00",
+      "values": {
+        "day_ahead_price": 157.54
+      }
+    },
+    {
+      "timestamp": "2026-08-27T08:45:00+02:00",
+      "values": {
+        "day_ahead_price": 137.77
+      }
+    },
+    {
+      "timestamp": "2026-08-27T09:00:00+02:00",
+      "values": {
+        "day_ahead_price": 151.28
+      }
+    },
+    {
+      "timestamp": "2026-08-27T09:15:00+02:00",
+      "values": {
+        "day_ahead_price": 132.34
+      }
+    },
+    {
+      "timestamp": "2026-08-27T09:30:00+02:00",
+      "values": {
+        "day_ahead_price": 116.91
+      }
+    },
+    {
+      "timestamp": "2026-08-27T09:45:00+02:00",
+      "values": {
+        "day_ahead_price": 98.08
+      }
+    },
+    {
+      "timestamp": "2026-08-27T10:00:00+02:00",
+      "values": {
+        "day_ahead_price": 126.98
+      }
+    },
+    {
+      "timestamp": "2026-08-27T10:15:00+02:00",
+      "values": {
+        "day_ahead_price": 116.1
+      }
+    },
+    {
+      "timestamp": "2026-08-27T10:30:00+02:00",
+      "values": {
+        "day_ahead_price": 94.98
+      }
+    },
+    {
+      "timestamp": "2026-08-27T10:45:00+02:00",
+      "values": {
+        "day_ahead_price": 78.35
+      }
+    },
+    {
+      "timestamp": "2026-08-27T11:00:00+02:00",
+      "values": {
+        "day_ahead_price": 105.06
+      }
+    },
+    {
+      "timestamp": "2026-08-27T11:15:00+02:00",
+      "values": {
+        "day_ahead_price": 71.31
+      }
+    },
+    {
+      "timestamp": "2026-08-27T11:30:00+02:00",
+      "values": {
+        "day_ahead_price": 40
+      }
+    },
+    {
+      "timestamp": "2026-08-27T11:45:00+02:00",
+      "values": {
+        "day_ahead_price": 13.94
+      }
+    },
+    {
+      "timestamp": "2026-08-27T12:00:00+02:00",
+      "values": {
+        "day_ahead_price": 31.59
+      }
+    },
+    {
+      "timestamp": "2026-08-27T12:15:00+02:00",
+      "values": {
+        "day_ahead_price": 23.84
+      }
+    },
+    {
+      "timestamp": "2026-08-27T12:30:00+02:00",
+      "values": {
+        "day_ahead_price": 20.09
+      }
+    },
+    {
+      "timestamp": "2026-08-27T12:45:00+02:00",
+      "values": {
+        "day_ahead_price": 11.21
+      }
+    },
+    {
+      "timestamp": "2026-08-27T13:00:00+02:00",
+      "values": {
+        "day_ahead_price": 10.02
+      }
+    },
+    {
+      "timestamp": "2026-08-27T13:15:00+02:00",
+      "values": {
+        "day_ahead_price": 10.05
+      }
+    },
+    {
+      "timestamp": "2026-08-27T13:30:00+02:00",
+      "values": {
+        "day_ahead_price": 6.16
+      }
+    },
+    {
+      "timestamp": "2026-08-27T13:45:00+02:00",
+      "values": {
+        "day_ahead_price": 0.06
+      }
+    },
+    {
+      "timestamp": "2026-08-27T14:00:00+02:00",
+      "values": {
+        "day_ahead_price": 0.09
+      }
+    },
+    {
+      "timestamp": "2026-08-27T14:15:00+02:00",
+      "values": {
+        "day_ahead_price": 10.03
+      }
+    },
+    {
+      "timestamp": "2026-08-27T14:30:00+02:00",
+      "values": {
+        "day_ahead_price": 20.05
+      }
+    },
+    {
+      "timestamp": "2026-08-27T14:45:00+02:00",
+      "values": {
+        "day_ahead_price": 26.6
+      }
+    },
+    {
+      "timestamp": "2026-08-27T15:00:00+02:00",
+      "values": {
+        "day_ahead_price": 22.36
+      }
+    },
+    {
+      "timestamp": "2026-08-27T15:15:00+02:00",
+      "values": {
+        "day_ahead_price": 30.01
+      }
+    },
+    {
+      "timestamp": "2026-08-27T15:30:00+02:00",
+      "values": {
+        "day_ahead_price": 54.58
+      }
+    },
+    {
+      "timestamp": "2026-08-27T15:45:00+02:00",
+      "values": {
+        "day_ahead_price": 74.58
+      }
+    },
+    {
+      "timestamp": "2026-08-27T16:00:00+02:00",
+      "values": {
+        "day_ahead_price": 51.04
+      }
+    },
+    {
+      "timestamp": "2026-08-27T16:15:00+02:00",
+      "values": {
+        "day_ahead_price": 93.31
+      }
+    },
+    {
+      "timestamp": "2026-08-27T16:30:00+02:00",
+      "values": {
+        "day_ahead_price": 112.93
+      }
+    },
+    {
+      "timestamp": "2026-08-27T16:45:00+02:00",
+      "values": {
+        "day_ahead_price": 127.32
+      }
+    },
+    {
+      "timestamp": "2026-08-27T17:00:00+02:00",
+      "values": {
+        "day_ahead_price": 115.08
+      }
+    },
+    {
+      "timestamp": "2026-08-27T17:15:00+02:00",
+      "values": {
+        "day_ahead_price": 128.97
+      }
+    },
+    {
+      "timestamp": "2026-08-27T17:30:00+02:00",
+      "values": {
+        "day_ahead_price": 154.02
+      }
+    },
+    {
+      "timestamp": "2026-08-27T17:45:00+02:00",
+      "values": {
+        "day_ahead_price": 168.73
+      }
+    },
+    {
+      "timestamp": "2026-08-27T18:00:00+02:00",
+      "values": {
+        "day_ahead_price": 151.75
+      }
+    },
+    {
+      "timestamp": "2026-08-27T18:15:00+02:00",
+      "values": {
+        "day_ahead_price": 169.48
+      }
+    },
+    {
+      "timestamp": "2026-08-27T18:30:00+02:00",
+      "values": {
+        "day_ahead_price": 177.02
+      }
+    },
+    {
+      "timestamp": "2026-08-27T18:45:00+02:00",
+      "values": {
+        "day_ahead_price": 197
+      }
+    },
+    {
+      "timestamp": "2026-08-27T19:00:00+02:00",
+      "values": {
+        "day_ahead_price": 184.45
+      }
+    },
+    {
+      "timestamp": "2026-08-27T19:15:00+02:00",
+      "values": {
+        "day_ahead_price": 194.52
+      }
+    },
+    {
+      "timestamp": "2026-08-27T19:30:00+02:00",
+      "values": {
+        "day_ahead_price": 205.99
+      }
+    },
+    {
+      "timestamp": "2026-08-27T19:45:00+02:00",
+      "values": {
+        "day_ahead_price": 212.09
+      }
+    },
+    {
+      "timestamp": "2026-08-27T20:00:00+02:00",
+      "values": {
+        "day_ahead_price": 205.74
+      }
+    },
+    {
+      "timestamp": "2026-08-27T20:15:00+02:00",
+      "values": {
+        "day_ahead_price": 192.87
+      }
+    },
+    {
+      "timestamp": "2026-08-27T20:30:00+02:00",
+      "values": {
+        "day_ahead_price": 187.8
+      }
+    },
+    {
+      "timestamp": "2026-08-27T20:45:00+02:00",
+      "values": {
+        "day_ahead_price": 179.54
+      }
+    },
+    {
+      "timestamp": "2026-08-27T21:00:00+02:00",
+      "values": {
+        "day_ahead_price": 192.13
+      }
+    },
+    {
+      "timestamp": "2026-08-27T21:15:00+02:00",
+      "values": {
+        "day_ahead_price": 180.12
+      }
+    },
+    {
+      "timestamp": "2026-08-27T21:30:00+02:00",
+      "values": {
+        "day_ahead_price": 171.99
+      }
+    },
+    {
+      "timestamp": "2026-08-27T21:45:00+02:00",
+      "values": {
+        "day_ahead_price": 159.44
+      }
+    },
+    {
+      "timestamp": "2026-08-27T22:00:00+02:00",
+      "values": {
+        "day_ahead_price": 175.56
+      }
+    },
+    {
+      "timestamp": "2026-08-27T22:15:00+02:00",
+      "values": {
+        "day_ahead_price": 170
+      }
+    },
+    {
+      "timestamp": "2026-08-27T22:30:00+02:00",
+      "values": {
+        "day_ahead_price": 159.68
+      }
+    },
+    {
+      "timestamp": "2026-08-27T22:45:00+02:00",
+      "values": {
+        "day_ahead_price": 154.44
+      }
+    },
+    {
+      "timestamp": "2026-08-27T23:00:00+02:00",
+      "values": {
+        "day_ahead_price": 159.9
+      }
+    },
+    {
+      "timestamp": "2026-08-27T23:15:00+02:00",
+      "values": {
+        "day_ahead_price": 153.16
+      }
+    },
+    {
+      "timestamp": "2026-08-27T23:30:00+02:00",
+      "values": {
+        "day_ahead_price": 149.08
+      }
+    },
+    {
+      "timestamp": "2026-08-27T23:45:00+02:00",
+      "values": {
+        "day_ahead_price": 139.42
+      }
+    },
+    {
+      "timestamp": "2026-08-28T00:00:00+02:00",
+      "values": {
+        "day_ahead_price": 141.01
+      }
+    },
+    {
+      "timestamp": "2026-08-28T00:15:00+02:00",
+      "values": {
+        "day_ahead_price": 141.92
+      }
+    },
+    {
+      "timestamp": "2026-08-28T00:30:00+02:00",
+      "values": {
+        "day_ahead_price": 139
+      }
+    },
+    {
+      "timestamp": "2026-08-28T00:45:00+02:00",
+      "values": {
+        "day_ahead_price": 136.16
+      }
+    },
+    {
+      "timestamp": "2026-08-28T01:00:00+02:00",
+      "values": {
+        "day_ahead_price": 141.81
+      }
+    },
+    {
+      "timestamp": "2026-08-28T01:15:00+02:00",
+      "values": {
+        "day_ahead_price": 138.66
+      }
+    },
+    {
+      "timestamp": "2026-08-28T01:30:00+02:00",
+      "values": {
+        "day_ahead_price": 138.02
+      }
+    },
+    {
+      "timestamp": "2026-08-28T01:45:00+02:00",
+      "values": {
+        "day_ahead_price": 138.66
+      }
+    },
+    {
+      "timestamp": "2026-08-28T02:00:00+02:00",
+      "values": {
+        "day_ahead_price": 137.18
+      }
+    },
+    {
+      "timestamp": "2026-08-28T02:15:00+02:00",
+      "values": {
+        "day_ahead_price": 138.68
+      }
+    },
+    {
+      "timestamp": "2026-08-28T02:30:00+02:00",
+      "values": {
+        "day_ahead_price": 140.51
+      }
+    },
+    {
+      "timestamp": "2026-08-28T02:45:00+02:00",
+      "values": {
+        "day_ahead_price": 136.6
+      }
+    },
+    {
+      "timestamp": "2026-08-28T03:00:00+02:00",
+      "values": {
+        "day_ahead_price": 140.89
+      }
+    },
+    {
+      "timestamp": "2026-08-28T03:15:00+02:00",
+      "values": {
+        "day_ahead_price": 139.62
+      }
+    },
+    {
+      "timestamp": "2026-08-28T03:30:00+02:00",
+      "values": {
+        "day_ahead_price": 138.26
+      }
+    },
+    {
+      "timestamp": "2026-08-28T03:45:00+02:00",
+      "values": {
+        "day_ahead_price": 136.43
+      }
+    },
+    {
+      "timestamp": "2026-08-28T04:00:00+02:00",
+      "values": {
+        "day_ahead_price": 137.11
+      }
+    },
+    {
+      "timestamp": "2026-08-28T04:15:00+02:00",
+      "values": {
+        "day_ahead_price": 139.44
+      }
+    },
+    {
+      "timestamp": "2026-08-28T04:30:00+02:00",
+      "values": {
+        "day_ahead_price": 139.96
+      }
+    },
+    {
+      "timestamp": "2026-08-28T04:45:00+02:00",
+      "values": {
+        "day_ahead_price": 139.85
+      }
+    },
+    {
+      "timestamp": "2026-08-28T05:00:00+02:00",
+      "values": {
+        "day_ahead_price": 137.37
+      }
+    },
+    {
+      "timestamp": "2026-08-28T05:15:00+02:00",
+      "values": {
+        "day_ahead_price": 141.3
+      }
+    },
+    {
+      "timestamp": "2026-08-28T05:30:00+02:00",
+      "values": {
+        "day_ahead_price": 148.48
+      }
+    },
+    {
+      "timestamp": "2026-08-28T05:45:00+02:00",
+      "values": {
+        "day_ahead_price": 159.92
+      }
+    },
+    {
+      "timestamp": "2026-08-28T06:00:00+02:00",
+      "values": {
+        "day_ahead_price": 164.48
+      }
+    },
+    {
+      "timestamp": "2026-08-28T06:15:00+02:00",
+      "values": {
+        "day_ahead_price": 172.23
+      }
+    },
+    {
+      "timestamp": "2026-08-28T06:30:00+02:00",
+      "values": {
+        "day_ahead_price": 174.29
+      }
+    },
+    {
+      "timestamp": "2026-08-28T06:45:00+02:00",
+      "values": {
+        "day_ahead_price": 173.03
+      }
+    },
+    {
+      "timestamp": "2026-08-28T07:00:00+02:00",
+      "values": {
+        "day_ahead_price": 179.81
+      }
+    },
+    {
+      "timestamp": "2026-08-28T07:15:00+02:00",
+      "values": {
+        "day_ahead_price": 180.26
+      }
+    },
+    {
+      "timestamp": "2026-08-28T07:30:00+02:00",
+      "values": {
+        "day_ahead_price": 177.41
+      }
+    },
+    {
+      "timestamp": "2026-08-28T07:45:00+02:00",
+      "values": {
+        "day_ahead_price": 174.44
+      }
+    },
+    {
+      "timestamp": "2026-08-28T08:00:00+02:00",
+      "values": {
+        "day_ahead_price": 187.4
+      }
+    },
+    {
+      "timestamp": "2026-08-28T08:15:00+02:00",
+      "values": {
+        "day_ahead_price": 172.74
+      }
+    },
+    {
+      "timestamp": "2026-08-28T08:30:00+02:00",
+      "values": {
+        "day_ahead_price": 162.59
+      }
+    },
+    {
+      "timestamp": "2026-08-28T08:45:00+02:00",
+      "values": {
+        "day_ahead_price": 155.15
+      }
+    },
+    {
+      "timestamp": "2026-08-28T09:00:00+02:00",
+      "values": {
+        "day_ahead_price": 161.87
+      }
+    },
+    {
+      "timestamp": "2026-08-28T09:15:00+02:00",
+      "values": {
+        "day_ahead_price": 161.77
+      }
+    },
+    {
+      "timestamp": "2026-08-28T09:30:00+02:00",
+      "values": {
+        "day_ahead_price": 151.21
+      }
+    },
+    {
+      "timestamp": "2026-08-28T09:45:00+02:00",
+      "values": {
+        "day_ahead_price": 145.76
+      }
+    },
+    {
+      "timestamp": "2026-08-28T10:00:00+02:00",
+      "values": {
+        "day_ahead_price": 155
+      }
+    },
+    {
+      "timestamp": "2026-08-28T10:15:00+02:00",
+      "values": {
+        "day_ahead_price": 142.59
+      }
+    },
+    {
+      "timestamp": "2026-08-28T10:30:00+02:00",
+      "values": {
+        "day_ahead_price": 130.66
+      }
+    },
+    {
+      "timestamp": "2026-08-28T10:45:00+02:00",
+      "values": {
+        "day_ahead_price": 122.31
+      }
+    },
+    {
+      "timestamp": "2026-08-28T11:00:00+02:00",
+      "values": {
+        "day_ahead_price": 129.06
+      }
+    },
+    {
+      "timestamp": "2026-08-28T11:15:00+02:00",
+      "values": {
+        "day_ahead_price": 122.65
+      }
+    },
+    {
+      "timestamp": "2026-08-28T11:30:00+02:00",
+      "values": {
+        "day_ahead_price": 117.81
+      }
+    },
+    {
+      "timestamp": "2026-08-28T11:45:00+02:00",
+      "values": {
+        "day_ahead_price": 116.81
+      }
+    },
+    {
+      "timestamp": "2026-08-28T12:00:00+02:00",
+      "values": {
+        "day_ahead_price": 112.08
+      }
+    },
+    {
+      "timestamp": "2026-08-28T12:15:00+02:00",
+      "values": {
+        "day_ahead_price": 108.98
+      }
+    },
+    {
+      "timestamp": "2026-08-28T12:30:00+02:00",
+      "values": {
+        "day_ahead_price": 112.94
+      }
+    },
+    {
+      "timestamp": "2026-08-28T12:45:00+02:00",
+      "values": {
+        "day_ahead_price": 109.56
+      }
+    },
+    {
+      "timestamp": "2026-08-28T13:00:00+02:00",
+      "values": {
+        "day_ahead_price": 98.45
+      }
+    },
+    {
+      "timestamp": "2026-08-28T13:15:00+02:00",
+      "values": {
+        "day_ahead_price": 93.85
+      }
+    },
+    {
+      "timestamp": "2026-08-28T13:30:00+02:00",
+      "values": {
+        "day_ahead_price": 100.58
+      }
+    },
+    {
+      "timestamp": "2026-08-28T13:45:00+02:00",
+      "values": {
+        "day_ahead_price": 92.07
+      }
+    },
+    {
+      "timestamp": "2026-08-28T14:00:00+02:00",
+      "values": {
+        "day_ahead_price": 102.01
+      }
+    },
+    {
+      "timestamp": "2026-08-28T14:15:00+02:00",
+      "values": {
+        "day_ahead_price": 100
+      }
+    },
+    {
+      "timestamp": "2026-08-28T14:30:00+02:00",
+      "values": {
+        "day_ahead_price": 106.26
+      }
+    },
+    {
+      "timestamp": "2026-08-28T14:45:00+02:00",
+      "values": {
+        "day_ahead_price": 107.73
+      }
+    },
+    {
+      "timestamp": "2026-08-28T15:00:00+02:00",
+      "values": {
+        "day_ahead_price": 109.55
+      }
+    },
+    {
+      "timestamp": "2026-08-28T15:15:00+02:00",
+      "values": {
+        "day_ahead_price": 112.23
+      }
+    },
+    {
+      "timestamp": "2026-08-28T15:30:00+02:00",
+      "values": {
+        "day_ahead_price": 116.41
+      }
+    },
+    {
+      "timestamp": "2026-08-28T15:45:00+02:00",
+      "values": {
+        "day_ahead_price": 119.29
+      }
+    },
+    {
+      "timestamp": "2026-08-28T16:00:00+02:00",
+      "values": {
+        "day_ahead_price": 111.35
+      }
+    },
+    {
+      "timestamp": "2026-08-28T16:15:00+02:00",
+      "values": {
+        "day_ahead_price": 118.32
+      }
+    },
+    {
+      "timestamp": "2026-08-28T16:30:00+02:00",
+      "values": {
+        "day_ahead_price": 122.23
+      }
+    },
+    {
+      "timestamp": "2026-08-28T16:45:00+02:00",
+      "values": {
+        "day_ahead_price": 126.34
+      }
+    },
+    {
+      "timestamp": "2026-08-28T17:00:00+02:00",
+      "values": {
+        "day_ahead_price": 116.99
+      }
+    },
+    {
+      "timestamp": "2026-08-28T17:15:00+02:00",
+      "values": {
+        "day_ahead_price": 135.97
+      }
+    },
+    {
+      "timestamp": "2026-08-28T17:30:00+02:00",
+      "values": {
+        "day_ahead_price": 156.76
+      }
+    },
+    {
+      "timestamp": "2026-08-28T17:45:00+02:00",
+      "values": {
+        "day_ahead_price": 163.09
+      }
+    },
+    {
+      "timestamp": "2026-08-28T18:00:00+02:00",
+      "values": {
+        "day_ahead_price": 144.39
+      }
+    },
+    {
+      "timestamp": "2026-08-28T18:15:00+02:00",
+      "values": {
+        "day_ahead_price": 160.89
+      }
+    },
+    {
+      "timestamp": "2026-08-28T18:30:00+02:00",
+      "values": {
+        "day_ahead_price": 167.3
+      }
+    },
+    {
+      "timestamp": "2026-08-28T18:45:00+02:00",
+      "values": {
+        "day_ahead_price": 169.34
+      }
+    },
+    {
+      "timestamp": "2026-08-28T19:00:00+02:00",
+      "values": {
+        "day_ahead_price": 154.89
+      }
+    },
+    {
+      "timestamp": "2026-08-28T19:15:00+02:00",
+      "values": {
+        "day_ahead_price": 165.82
+      }
+    },
+    {
+      "timestamp": "2026-08-28T19:30:00+02:00",
+      "values": {
+        "day_ahead_price": 175.5
+      }
+    },
+    {
+      "timestamp": "2026-08-28T19:45:00+02:00",
+      "values": {
+        "day_ahead_price": 193.95
+      }
+    },
+    {
+      "timestamp": "2026-08-28T20:00:00+02:00",
+      "values": {
+        "day_ahead_price": 174.88
+      }
+    },
+    {
+      "timestamp": "2026-08-28T20:15:00+02:00",
+      "values": {
+        "day_ahead_price": 177.73
+      }
+    },
+    {
+      "timestamp": "2026-08-28T20:30:00+02:00",
+      "values": {
+        "day_ahead_price": 180.83
+      }
+    },
+    {
+      "timestamp": "2026-08-28T20:45:00+02:00",
+      "values": {
+        "day_ahead_price": 173.64
+      }
+    },
+    {
+      "timestamp": "2026-08-28T21:00:00+02:00",
+      "values": {
+        "day_ahead_price": 176.3
+      }
+    },
+    {
+      "timestamp": "2026-08-28T21:15:00+02:00",
+      "values": {
+        "day_ahead_price": 168.12
+      }
+    },
+    {
+      "timestamp": "2026-08-28T21:30:00+02:00",
+      "values": {
+        "day_ahead_price": 166.01
+      }
+    },
+    {
+      "timestamp": "2026-08-28T21:45:00+02:00",
+      "values": {
+        "day_ahead_price": 154.01
+      }
+    },
+    {
+      "timestamp": "2026-08-28T22:00:00+02:00",
+      "values": {
+        "day_ahead_price": 171.44
+      }
+    },
+    {
+      "timestamp": "2026-08-28T22:15:00+02:00",
+      "values": {
+        "day_ahead_price": 162.3
+      }
+    },
+    {
+      "timestamp": "2026-08-28T22:30:00+02:00",
+      "values": {
+        "day_ahead_price": 161.4
+      }
+    },
+    {
+      "timestamp": "2026-08-28T22:45:00+02:00",
+      "values": {
+        "day_ahead_price": 150.64
+      }
+    },
+    {
+      "timestamp": "2026-08-28T23:00:00+02:00",
+      "values": {
+        "day_ahead_price": 157.08
+      }
+    },
+    {
+      "timestamp": "2026-08-28T23:15:00+02:00",
+      "values": {
+        "day_ahead_price": 150.8
+      }
+    },
+    {
+      "timestamp": "2026-08-28T23:30:00+02:00",
+      "values": {
+        "day_ahead_price": 141.55
+      }
+    },
+    {
+      "timestamp": "2026-08-28T23:45:00+02:00",
+      "values": {
+        "day_ahead_price": 131.1
+      }
+    },
+    {
+      "timestamp": "2026-08-29T00:00:00+02:00",
+      "values": {
+        "day_ahead_price": 141.58
+      }
+    },
+    {
+      "timestamp": "2026-08-29T00:15:00+02:00",
+      "values": {
+        "day_ahead_price": 135.4
+      }
+    },
+    {
+      "timestamp": "2026-08-29T00:30:00+02:00",
+      "values": {
+        "day_ahead_price": 127.97
+      }
+    },
+    {
+      "timestamp": "2026-08-29T00:45:00+02:00",
+      "values": {
+        "day_ahead_price": 117.12
+      }
+    },
+    {
+      "timestamp": "2026-08-29T01:00:00+02:00",
+      "values": {
+        "day_ahead_price": 117.5
+      }
+    },
+    {
+      "timestamp": "2026-08-29T01:15:00+02:00",
+      "values": {
+        "day_ahead_price": 114.51
+      }
+    },
+    {
+      "timestamp": "2026-08-29T01:30:00+02:00",
+      "values": {
+        "day_ahead_price": 110.37
+      }
+    },
+    {
+      "timestamp": "2026-08-29T01:45:00+02:00",
+      "values": {
+        "day_ahead_price": 107.04
+      }
+    },
+    {
+      "timestamp": "2026-08-29T02:00:00+02:00",
+      "values": {
+        "day_ahead_price": 107.51
+      }
+    },
+    {
+      "timestamp": "2026-08-29T02:15:00+02:00",
+      "values": {
+        "day_ahead_price": 101.93
+      }
+    },
+    {
+      "timestamp": "2026-08-29T02:30:00+02:00",
+      "values": {
+        "day_ahead_price": 100.07
+      }
+    },
+    {
+      "timestamp": "2026-08-29T02:45:00+02:00",
+      "values": {
+        "day_ahead_price": 91.68
+      }
+    },
+    {
+      "timestamp": "2026-08-29T03:00:00+02:00",
+      "values": {
+        "day_ahead_price": 97.47
+      }
+    },
+    {
+      "timestamp": "2026-08-29T03:15:00+02:00",
+      "values": {
+        "day_ahead_price": 91.82
+      }
+    },
+    {
+      "timestamp": "2026-08-29T03:30:00+02:00",
+      "values": {
+        "day_ahead_price": 91.19
+      }
+    },
+    {
+      "timestamp": "2026-08-29T03:45:00+02:00",
+      "values": {
+        "day_ahead_price": 92.52
+      }
+    },
+    {
+      "timestamp": "2026-08-29T04:00:00+02:00",
+      "values": {
+        "day_ahead_price": 96.99
+      }
+    },
+    {
+      "timestamp": "2026-08-29T04:15:00+02:00",
+      "values": {
+        "day_ahead_price": 93.91
+      }
+    },
+    {
+      "timestamp": "2026-08-29T04:30:00+02:00",
+      "values": {
+        "day_ahead_price": 91.6
+      }
+    },
+    {
+      "timestamp": "2026-08-29T04:45:00+02:00",
+      "values": {
+        "day_ahead_price": 89.52
+      }
+    },
+    {
+      "timestamp": "2026-08-29T05:00:00+02:00",
+      "values": {
+        "day_ahead_price": 99.26
+      }
+    },
+    {
+      "timestamp": "2026-08-29T05:15:00+02:00",
+      "values": {
+        "day_ahead_price": 95.12
+      }
+    },
+    {
+      "timestamp": "2026-08-29T05:30:00+02:00",
+      "values": {
+        "day_ahead_price": 95.23
+      }
+    },
+    {
+      "timestamp": "2026-08-29T05:45:00+02:00",
+      "values": {
+        "day_ahead_price": 96.71
+      }
+    },
+    {
+      "timestamp": "2026-08-29T06:00:00+02:00",
+      "values": {
+        "day_ahead_price": 97.2
+      }
+    },
+    {
+      "timestamp": "2026-08-29T06:15:00+02:00",
+      "values": {
+        "day_ahead_price": 97.47
+      }
+    },
+    {
+      "timestamp": "2026-08-29T06:30:00+02:00",
+      "values": {
+        "day_ahead_price": 97.19
+      }
+    },
+    {
+      "timestamp": "2026-08-29T06:45:00+02:00",
+      "values": {
+        "day_ahead_price": 96.68
+      }
+    },
+    {
+      "timestamp": "2026-08-29T07:00:00+02:00",
+      "values": {
+        "day_ahead_price": 107.2
+      }
+    },
+    {
+      "timestamp": "2026-08-29T07:15:00+02:00",
+      "values": {
+        "day_ahead_price": 103.88
+      }
+    },
+    {
+      "timestamp": "2026-08-29T07:30:00+02:00",
+      "values": {
+        "day_ahead_price": 100.79
+      }
+    },
+    {
+      "timestamp": "2026-08-29T07:45:00+02:00",
+      "values": {
+        "day_ahead_price": 93.09
+      }
+    },
+    {
+      "timestamp": "2026-08-29T08:00:00+02:00",
+      "values": {
+        "day_ahead_price": 106.11
+      }
+    },
+    {
+      "timestamp": "2026-08-29T08:15:00+02:00",
+      "values": {
+        "day_ahead_price": 83.69
+      }
+    },
+    {
+      "timestamp": "2026-08-29T08:30:00+02:00",
+      "values": {
+        "day_ahead_price": 41.79
+      }
+    },
+    {
+      "timestamp": "2026-08-29T08:45:00+02:00",
+      "values": {
+        "day_ahead_price": 10.09
+      }
+    },
+    {
+      "timestamp": "2026-08-29T09:00:00+02:00",
+      "values": {
+        "day_ahead_price": 18.4
+      }
+    },
+    {
+      "timestamp": "2026-08-29T09:15:00+02:00",
+      "values": {
+        "day_ahead_price": 0.06
+      }
+    },
+    {
+      "timestamp": "2026-08-29T09:30:00+02:00",
+      "values": {
+        "day_ahead_price": -0.01
+      }
+    },
+    {
+      "timestamp": "2026-08-29T09:45:00+02:00",
+      "values": {
+        "day_ahead_price": -0.15
+      }
+    },
+    {
+      "timestamp": "2026-08-29T10:00:00+02:00",
+      "values": {
+        "day_ahead_price": -0.01
+      }
+    },
+    {
+      "timestamp": "2026-08-29T10:15:00+02:00",
+      "values": {
+        "day_ahead_price": -0.1
+      }
+    },
+    {
+      "timestamp": "2026-08-29T10:30:00+02:00",
+      "values": {
+        "day_ahead_price": -0.51
+      }
+    },
+    {
+      "timestamp": "2026-08-29T10:45:00+02:00",
+      "values": {
+        "day_ahead_price": -0.75
+      }
+    },
+    {
+      "timestamp": "2026-08-29T11:00:00+02:00",
+      "values": {
+        "day_ahead_price": -1.1
+      }
+    },
+    {
+      "timestamp": "2026-08-29T11:15:00+02:00",
+      "values": {
+        "day_ahead_price": -1.35
+      }
+    },
+    {
+      "timestamp": "2026-08-29T11:30:00+02:00",
+      "values": {
+        "day_ahead_price": -1.39
+      }
+    },
+    {
+      "timestamp": "2026-08-29T11:45:00+02:00",
+      "values": {
+        "day_ahead_price": -1.58
+      }
+    },
+    {
+      "timestamp": "2026-08-29T12:00:00+02:00",
+      "values": {
+        "day_ahead_price": -1.57
+      }
+    },
+    {
+      "timestamp": "2026-08-29T12:15:00+02:00",
+      "values": {
+        "day_ahead_price": -1.78
+      }
+    },
+    {
+      "timestamp": "2026-08-29T12:30:00+02:00",
+      "values": {
+        "day_ahead_price": -1.88
+      }
+    },
+    {
+      "timestamp": "2026-08-29T12:45:00+02:00",
+      "values": {
+        "day_ahead_price": -2.02
+      }
+    },
+    {
+      "timestamp": "2026-08-29T13:00:00+02:00",
+      "values": {
+        "day_ahead_price": -1.91
+      }
+    },
+    {
+      "timestamp": "2026-08-29T13:15:00+02:00",
+      "values": {
+        "day_ahead_price": -1.89
+      }
+    },
+    {
+      "timestamp": "2026-08-29T13:30:00+02:00",
+      "values": {
+        "day_ahead_price": -1.69
+      }
+    },
+    {
+      "timestamp": "2026-08-29T13:45:00+02:00",
+      "values": {
+        "day_ahead_price": -1.56
+      }
+    },
+    {
+      "timestamp": "2026-08-29T14:00:00+02:00",
+      "values": {
+        "day_ahead_price": -1.53
+      }
+    },
+    {
+      "timestamp": "2026-08-29T14:15:00+02:00",
+      "values": {
+        "day_ahead_price": -1.29
+      }
+    },
+    {
+      "timestamp": "2026-08-29T14:30:00+02:00",
+      "values": {
+        "day_ahead_price": -1
+      }
+    },
+    {
+      "timestamp": "2026-08-29T14:45:00+02:00",
+      "values": {
+        "day_ahead_price": -0.88
+      }
+    },
+    {
+      "timestamp": "2026-08-29T15:00:00+02:00",
+      "values": {
+        "day_ahead_price": -0.08
+      }
+    },
+    {
+      "timestamp": "2026-08-29T15:15:00+02:00",
+      "values": {
+        "day_ahead_price": -0.01
+      }
+    },
+    {
+      "timestamp": "2026-08-29T15:30:00+02:00",
+      "values": {
+        "day_ahead_price": 0
+      }
+    },
+    {
+      "timestamp": "2026-08-29T15:45:00+02:00",
+      "values": {
+        "day_ahead_price": 0
+      }
+    },
+    {
+      "timestamp": "2026-08-29T16:00:00+02:00",
+      "values": {
+        "day_ahead_price": 0
+      }
+    },
+    {
+      "timestamp": "2026-08-29T16:15:00+02:00",
+      "values": {
+        "day_ahead_price": 1.66
+      }
+    },
+    {
+      "timestamp": "2026-08-29T16:30:00+02:00",
+      "values": {
+        "day_ahead_price": 30.88
+      }
+    },
+    {
+      "timestamp": "2026-08-29T16:45:00+02:00",
+      "values": {
+        "day_ahead_price": 65.78
+      }
+    },
+    {
+      "timestamp": "2026-08-29T17:00:00+02:00",
+      "values": {
+        "day_ahead_price": 51.44
+      }
+    },
+    {
+      "timestamp": "2026-08-29T17:15:00+02:00",
+      "values": {
+        "day_ahead_price": 100.78
+      }
+    },
+    {
+      "timestamp": "2026-08-29T17:30:00+02:00",
+      "values": {
+        "day_ahead_price": 131.42
+      }
+    },
+    {
+      "timestamp": "2026-08-29T17:45:00+02:00",
+      "values": {
+        "day_ahead_price": 168.33
+      }
+    },
+    {
+      "timestamp": "2026-08-29T18:00:00+02:00",
+      "values": {
+        "day_ahead_price": 146.48
+      }
+    },
+    {
+      "timestamp": "2026-08-29T18:15:00+02:00",
+      "values": {
+        "day_ahead_price": 152.72
+      }
+    },
+    {
+      "timestamp": "2026-08-29T18:30:00+02:00",
+      "values": {
+        "day_ahead_price": 185.46
+      }
+    },
+    {
+      "timestamp": "2026-08-29T18:45:00+02:00",
+      "values": {
+        "day_ahead_price": 201.35
+      }
+    },
+    {
+      "timestamp": "2026-08-29T19:00:00+02:00",
+      "values": {
+        "day_ahead_price": 183.9
+      }
+    },
+    {
+      "timestamp": "2026-08-29T19:15:00+02:00",
+      "values": {
+        "day_ahead_price": 191.92
+      }
+    },
+    {
+      "timestamp": "2026-08-29T19:30:00+02:00",
+      "values": {
+        "day_ahead_price": 205.57
+      }
+    },
+    {
+      "timestamp": "2026-08-29T19:45:00+02:00",
+      "values": {
+        "day_ahead_price": 214.47
+      }
+    },
+    {
+      "timestamp": "2026-08-29T20:00:00+02:00",
+      "values": {
+        "day_ahead_price": 217.5
+      }
+    },
+    {
+      "timestamp": "2026-08-29T20:15:00+02:00",
+      "values": {
+        "day_ahead_price": 198.94
+      }
+    },
+    {
+      "timestamp": "2026-08-29T20:30:00+02:00",
+      "values": {
+        "day_ahead_price": 181.76
+      }
+    },
+    {
+      "timestamp": "2026-08-29T20:45:00+02:00",
+      "values": {
+        "day_ahead_price": 180.92
+      }
+    },
+    {
+      "timestamp": "2026-08-29T21:00:00+02:00",
+      "values": {
+        "day_ahead_price": 205.71
+      }
+    },
+    {
+      "timestamp": "2026-08-29T21:15:00+02:00",
+      "values": {
+        "day_ahead_price": 179.29
+      }
+    },
+    {
+      "timestamp": "2026-08-29T21:30:00+02:00",
+      "values": {
+        "day_ahead_price": 166.74
+      }
+    },
+    {
+      "timestamp": "2026-08-29T21:45:00+02:00",
+      "values": {
+        "day_ahead_price": 158.33
+      }
+    },
+    {
+      "timestamp": "2026-08-29T22:00:00+02:00",
+      "values": {
+        "day_ahead_price": 181.9
+      }
+    },
+    {
+      "timestamp": "2026-08-29T22:15:00+02:00",
+      "values": {
+        "day_ahead_price": 162.32
+      }
+    },
+    {
+      "timestamp": "2026-08-29T22:30:00+02:00",
+      "values": {
+        "day_ahead_price": 158.1
+      }
+    },
+    {
+      "timestamp": "2026-08-29T22:45:00+02:00",
+      "values": {
+        "day_ahead_price": 151.65
+      }
+    },
+    {
+      "timestamp": "2026-08-29T23:00:00+02:00",
+      "values": {
+        "day_ahead_price": 150.77
+      }
+    },
+    {
+      "timestamp": "2026-08-29T23:15:00+02:00",
+      "values": {
+        "day_ahead_price": 146.47
+      }
+    },
+    {
+      "timestamp": "2026-08-29T23:30:00+02:00",
+      "values": {
+        "day_ahead_price": 145.54
+      }
+    },
+    {
+      "timestamp": "2026-08-29T23:45:00+02:00",
+      "values": {
+        "day_ahead_price": 139.68
+      }
+    },
+    {
+      "timestamp": "2026-08-30T00:00:00+02:00",
+      "values": {
+        "day_ahead_price": 135.07
+      }
+    },
+    {
+      "timestamp": "2026-08-30T00:15:00+02:00",
+      "values": {
+        "day_ahead_price": 124.31
+      }
+    },
+    {
+      "timestamp": "2026-08-30T00:30:00+02:00",
+      "values": {
+        "day_ahead_price": 110.72
+      }
+    },
+    {
+      "timestamp": "2026-08-30T00:45:00+02:00",
+      "values": {
+        "day_ahead_price": 99.62
+      }
+    },
+    {
+      "timestamp": "2026-08-30T01:00:00+02:00",
+      "values": {
+        "day_ahead_price": 108.66
+      }
+    },
+    {
+      "timestamp": "2026-08-30T01:15:00+02:00",
+      "values": {
+        "day_ahead_price": 103.92
+      }
+    },
+    {
+      "timestamp": "2026-08-30T01:30:00+02:00",
+      "values": {
+        "day_ahead_price": 101.17
+      }
+    },
+    {
+      "timestamp": "2026-08-30T01:45:00+02:00",
+      "values": {
+        "day_ahead_price": 96.6
+      }
+    },
+    {
+      "timestamp": "2026-08-30T02:00:00+02:00",
+      "values": {
+        "day_ahead_price": 98.6
+      }
+    },
+    {
+      "timestamp": "2026-08-30T02:15:00+02:00",
+      "values": {
+        "day_ahead_price": 88.17
+      }
+    },
+    {
+      "timestamp": "2026-08-30T02:30:00+02:00",
+      "values": {
+        "day_ahead_price": 80.99
+      }
+    },
+    {
+      "timestamp": "2026-08-30T02:45:00+02:00",
+      "values": {
+        "day_ahead_price": 76.38
+      }
+    },
+    {
+      "timestamp": "2026-08-30T03:00:00+02:00",
+      "values": {
+        "day_ahead_price": 89.37
+      }
+    },
+    {
+      "timestamp": "2026-08-30T03:15:00+02:00",
+      "values": {
+        "day_ahead_price": 79.85
+      }
+    },
+    {
+      "timestamp": "2026-08-30T03:30:00+02:00",
+      "values": {
+        "day_ahead_price": 75.68
+      }
+    },
+    {
+      "timestamp": "2026-08-30T03:45:00+02:00",
+      "values": {
+        "day_ahead_price": 66.85
+      }
+    },
+    {
+      "timestamp": "2026-08-30T04:00:00+02:00",
+      "values": {
+        "day_ahead_price": 71.26
+      }
+    },
+    {
+      "timestamp": "2026-08-30T04:15:00+02:00",
+      "values": {
+        "day_ahead_price": 67.43
+      }
+    },
+    {
+      "timestamp": "2026-08-30T04:30:00+02:00",
+      "values": {
+        "day_ahead_price": 68.94
+      }
+    },
+    {
+      "timestamp": "2026-08-30T04:45:00+02:00",
+      "values": {
+        "day_ahead_price": 69.88
+      }
+    },
+    {
+      "timestamp": "2026-08-30T05:00:00+02:00",
+      "values": {
+        "day_ahead_price": 74.01
+      }
+    },
+    {
+      "timestamp": "2026-08-30T05:15:00+02:00",
+      "values": {
+        "day_ahead_price": 71.36
+      }
+    },
+    {
+      "timestamp": "2026-08-30T05:30:00+02:00",
+      "values": {
+        "day_ahead_price": 72.66
+      }
+    },
+    {
+      "timestamp": "2026-08-30T05:45:00+02:00",
+      "values": {
+        "day_ahead_price": 73.82
+      }
+    },
+    {
+      "timestamp": "2026-08-30T06:00:00+02:00",
+      "values": {
+        "day_ahead_price": 67.01
+      }
+    },
+    {
+      "timestamp": "2026-08-30T06:15:00+02:00",
+      "values": {
+        "day_ahead_price": 70.42
+      }
+    },
+    {
+      "timestamp": "2026-08-30T06:30:00+02:00",
+      "values": {
+        "day_ahead_price": 72.91
+      }
+    },
+    {
+      "timestamp": "2026-08-30T06:45:00+02:00",
+      "values": {
+        "day_ahead_price": 73.24
+      }
+    },
+    {
+      "timestamp": "2026-08-30T07:00:00+02:00",
+      "values": {
+        "day_ahead_price": 75.74
+      }
+    },
+    {
+      "timestamp": "2026-08-30T07:15:00+02:00",
+      "values": {
+        "day_ahead_price": 62.34
+      }
+    },
+    {
+      "timestamp": "2026-08-30T07:30:00+02:00",
+      "values": {
+        "day_ahead_price": 55.88
+      }
+    },
+    {
+      "timestamp": "2026-08-30T07:45:00+02:00",
+      "values": {
+        "day_ahead_price": 42.22
+      }
+    },
+    {
+      "timestamp": "2026-08-30T08:00:00+02:00",
+      "values": {
+        "day_ahead_price": 35
+      }
+    },
+    {
+      "timestamp": "2026-08-30T08:15:00+02:00",
+      "values": {
+        "day_ahead_price": 20.02
+      }
+    },
+    {
+      "timestamp": "2026-08-30T08:30:00+02:00",
+      "values": {
+        "day_ahead_price": 8.83
+      }
+    },
+    {
+      "timestamp": "2026-08-30T08:45:00+02:00",
+      "values": {
+        "day_ahead_price": 0.09
+      }
+    },
+    {
+      "timestamp": "2026-08-30T09:00:00+02:00",
+      "values": {
+        "day_ahead_price": 0.85
+      }
+    },
+    {
+      "timestamp": "2026-08-30T09:15:00+02:00",
+      "values": {
+        "day_ahead_price": 0
+      }
+    },
+    {
+      "timestamp": "2026-08-30T09:30:00+02:00",
+      "values": {
+        "day_ahead_price": -0.08
+      }
+    },
+    {
+      "timestamp": "2026-08-30T09:45:00+02:00",
+      "values": {
+        "day_ahead_price": -0.82
+      }
+    },
+    {
+      "timestamp": "2026-08-30T10:00:00+02:00",
+      "values": {
+        "day_ahead_price": -0.08
+      }
+    },
+    {
+      "timestamp": "2026-08-30T10:15:00+02:00",
+      "values": {
+        "day_ahead_price": -0.09
+      }
+    },
+    {
+      "timestamp": "2026-08-30T10:30:00+02:00",
+      "values": {
+        "day_ahead_price": -0.12
+      }
+    },
+    {
+      "timestamp": "2026-08-30T10:45:00+02:00",
+      "values": {
+        "day_ahead_price": -0.12
+      }
+    },
+    {
+      "timestamp": "2026-08-30T11:00:00+02:00",
+      "values": {
+        "day_ahead_price": -0.15
+      }
+    },
+    {
+      "timestamp": "2026-08-30T11:15:00+02:00",
+      "values": {
+        "day_ahead_price": -0.14
+      }
+    },
+    {
+      "timestamp": "2026-08-30T11:30:00+02:00",
+      "values": {
+        "day_ahead_price": -0.15
+      }
+    },
+    {
+      "timestamp": "2026-08-30T11:45:00+02:00",
+      "values": {
+        "day_ahead_price": -0.17
+      }
+    },
+    {
+      "timestamp": "2026-08-30T12:00:00+02:00",
+      "values": {
+        "day_ahead_price": -0.99
+      }
+    },
+    {
+      "timestamp": "2026-08-30T12:15:00+02:00",
+      "values": {
+        "day_ahead_price": -1
+      }
+    },
+    {
+      "timestamp": "2026-08-30T12:30:00+02:00",
+      "values": {
+        "day_ahead_price": -1
+      }
+    },
+    {
+      "timestamp": "2026-08-30T12:45:00+02:00",
+      "values": {
+        "day_ahead_price": -1.09
+      }
+    },
+    {
+      "timestamp": "2026-08-30T13:00:00+02:00",
+      "values": {
+        "day_ahead_price": -1.02
+      }
+    },
+    {
+      "timestamp": "2026-08-30T13:15:00+02:00",
+      "values": {
+        "day_ahead_price": -1.04
+      }
+    },
+    {
+      "timestamp": "2026-08-30T13:30:00+02:00",
+      "values": {
+        "day_ahead_price": -1.06
+      }
+    },
+    {
+      "timestamp": "2026-08-30T13:45:00+02:00",
+      "values": {
+        "day_ahead_price": -1.09
+      }
+    },
+    {
+      "timestamp": "2026-08-30T14:00:00+02:00",
+      "values": {
+        "day_ahead_price": -1.19
+      }
+    },
+    {
+      "timestamp": "2026-08-30T14:15:00+02:00",
+      "values": {
+        "day_ahead_price": -1.03
+      }
+    },
+    {
+      "timestamp": "2026-08-30T14:30:00+02:00",
+      "values": {
+        "day_ahead_price": -1
+      }
+    },
+    {
+      "timestamp": "2026-08-30T14:45:00+02:00",
+      "values": {
+        "day_ahead_price": -1
+      }
+    },
+    {
+      "timestamp": "2026-08-30T15:00:00+02:00",
+      "values": {
+        "day_ahead_price": -0.14
+      }
+    },
+    {
+      "timestamp": "2026-08-30T15:15:00+02:00",
+      "values": {
+        "day_ahead_price": -0.12
+      }
+    },
+    {
+      "timestamp": "2026-08-30T15:30:00+02:00",
+      "values": {
+        "day_ahead_price": -0.12
+      }
+    },
+    {
+      "timestamp": "2026-08-30T15:45:00+02:00",
+      "values": {
+        "day_ahead_price": -0.11
+      }
+    },
+    {
+      "timestamp": "2026-08-30T16:00:00+02:00",
+      "values": {
+        "day_ahead_price": -0.45
+      }
+    },
+    {
+      "timestamp": "2026-08-30T16:15:00+02:00",
+      "values": {
+        "day_ahead_price": -0.1
+      }
+    },
+    {
+      "timestamp": "2026-08-30T16:30:00+02:00",
+      "values": {
+        "day_ahead_price": -0.01
+      }
+    },
+    {
+      "timestamp": "2026-08-30T16:45:00+02:00",
+      "values": {
+        "day_ahead_price": 0.52
+      }
+    },
+    {
+      "timestamp": "2026-08-30T17:00:00+02:00",
+      "values": {
+        "day_ahead_price": 4.15
+      }
+    },
+    {
+      "timestamp": "2026-08-30T17:15:00+02:00",
+      "values": {
+        "day_ahead_price": 33.64
+      }
+    },
+    {
+      "timestamp": "2026-08-30T17:30:00+02:00",
+      "values": {
+        "day_ahead_price": 74.59
+      }
+    },
+    {
+      "timestamp": "2026-08-30T17:45:00+02:00",
+      "values": {
+        "day_ahead_price": 137.41
+      }
+    },
+    {
+      "timestamp": "2026-08-30T18:00:00+02:00",
+      "values": {
+        "day_ahead_price": 110.7
+      }
+    },
+    {
+      "timestamp": "2026-08-30T18:15:00+02:00",
+      "values": {
+        "day_ahead_price": 161.07
+      }
+    },
+    {
+      "timestamp": "2026-08-30T18:30:00+02:00",
+      "values": {
+        "day_ahead_price": 181.26
+      }
+    },
+    {
+      "timestamp": "2026-08-30T18:45:00+02:00",
+      "values": {
+        "day_ahead_price": 200.54
+      }
+    },
+    {
+      "timestamp": "2026-08-30T19:00:00+02:00",
+      "values": {
+        "day_ahead_price": 169.46
+      }
+    },
+    {
+      "timestamp": "2026-08-30T19:15:00+02:00",
+      "values": {
+        "day_ahead_price": 180.69
+      }
+    },
+    {
+      "timestamp": "2026-08-30T19:30:00+02:00",
+      "values": {
+        "day_ahead_price": 187.98
+      }
+    },
+    {
+      "timestamp": "2026-08-30T19:45:00+02:00",
+      "values": {
+        "day_ahead_price": 198.53
+      }
+    },
+    {
+      "timestamp": "2026-08-30T20:00:00+02:00",
+      "values": {
+        "day_ahead_price": 174.45
+      }
+    },
+    {
+      "timestamp": "2026-08-30T20:15:00+02:00",
+      "values": {
+        "day_ahead_price": 184.63
+      }
+    },
+    {
+      "timestamp": "2026-08-30T20:30:00+02:00",
+      "values": {
+        "day_ahead_price": 201.43
+      }
+    },
+    {
+      "timestamp": "2026-08-30T20:45:00+02:00",
+      "values": {
+        "day_ahead_price": 212.27
+      }
+    },
+    {
+      "timestamp": "2026-08-30T21:00:00+02:00",
+      "values": {
+        "day_ahead_price": 203.93
+      }
+    },
+    {
+      "timestamp": "2026-08-30T21:15:00+02:00",
+      "values": {
+        "day_ahead_price": 200.01
+      }
+    },
+    {
+      "timestamp": "2026-08-30T21:30:00+02:00",
+      "values": {
+        "day_ahead_price": 187.92
+      }
+    },
+    {
+      "timestamp": "2026-08-30T21:45:00+02:00",
+      "values": {
+        "day_ahead_price": 179.83
+      }
+    },
+    {
+      "timestamp": "2026-08-30T22:00:00+02:00",
+      "values": {
+        "day_ahead_price": 189.32
+      }
+    },
+    {
+      "timestamp": "2026-08-30T22:15:00+02:00",
+      "values": {
+        "day_ahead_price": 180.06
+      }
+    },
+    {
+      "timestamp": "2026-08-30T22:30:00+02:00",
+      "values": {
+        "day_ahead_price": 181.03
+      }
+    },
+    {
+      "timestamp": "2026-08-30T22:45:00+02:00",
+      "values": {
+        "day_ahead_price": 175.34
+      }
+    },
+    {
+      "timestamp": "2026-08-30T23:00:00+02:00",
+      "values": {
+        "day_ahead_price": 178.71
+      }
+    },
+    {
+      "timestamp": "2026-08-30T23:15:00+02:00",
+      "values": {
+        "day_ahead_price": 167.37
+      }
+    },
+    {
+      "timestamp": "2026-08-30T23:30:00+02:00",
+      "values": {
+        "day_ahead_price": 166.57
+      }
+    },
+    {
+      "timestamp": "2026-08-30T23:45:00+02:00",
+      "values": {
+        "day_ahead_price": 162.5
+      }
+    }
+  ],
+  "attributes": {},
+  "license": "CC BY 4.0 (creativecommons.org/licenses/by/4.0) from Bundesnetzagentur | SMARD.de",
+  "deprecated": false
+}

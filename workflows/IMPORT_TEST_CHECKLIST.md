@@ -11,6 +11,8 @@ Keep every workflow inactive until its manual test passes.
 - Apply `database/006_add_epex_spot_web.sql`.
 - Apply `database/007_add_energy_charts_intraday.sql`.
 - Apply `database/008_extend_epex_complete_market_results.sql`.
+- Apply `database/009_validate_grid_frequency.sql`.
+- Apply `database/010_add_energy_charts_auctions.sql`.
 - Configure `ENTSOE_SECURITY_TOKEN` in the n8n runtime.
 - Create one n8n PostgreSQL credential with SSL mode matching the client database.
 - Assign that credential to every PostgreSQL node after import.
@@ -51,6 +53,11 @@ Keep every workflow inactive until its manual test passes.
    - Execute workflow `08` manually. A manual execution requests MRC, IDA1, IDA2, IDA3, Continuous 15-minute, and Continuous 60-minute.
    - Confirm six successful PostgreSQL outputs and coverage rows for all six products.
    - If any request is blocked, returns the wrong table, or fails row-count validation, keep workflow `08` inactive and continue using Fraunhofer workflow `07`.
+10. `10_market_prices_energy_charts_auctions_de_lu.json`
+   - Assign the PostgreSQL credential to `Store Fraunhofer Auction Prices`.
+   - Execute `Test Auctions Manually` and confirm Day-Ahead and all currently published IDA products reach PostgreSQL.
+   - A zero product count is valid before that auction has been published.
+   - Confirm `v_energy_charts_auction_coverage` contains `day_ahead`, `ida1`, `ida2`, and `ida3` as they become available; then activate the workflow.
 
 ## Verification Queries
 
@@ -62,6 +69,7 @@ select * from energy_data.v_grafana_market_price_stats_today order by source_cod
 select * from energy_data.v_grafana_energy_charts_intraday_latest;
 select * from energy_data.v_grafana_energy_charts_intraday_stats_latest_day;
 select * from energy_data.v_epex_complete_coverage order by product_name;
+select * from energy_data.v_energy_charts_auction_coverage order by auction_code;
 select * from energy_data.v_ingestion_health;
 select * from energy_data.ingestion_alerts where resolved_at is null;
 ```
