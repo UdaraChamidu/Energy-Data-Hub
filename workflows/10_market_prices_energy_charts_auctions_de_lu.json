@@ -10,7 +10,7 @@
               "minutesInterval": 30
             }
           ]
-        }
+        } 
       },
       "id": "energy-charts-auction-schedule",
       "name": "Every 30 minutes",
